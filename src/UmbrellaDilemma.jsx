@@ -6,23 +6,24 @@ import React, {
   useCallback,
 } from "react";
 
-// --------------------------------------------------
+// -----------------------------------------------
 // ASSETS
-// --------------------------------------------------
+// -----------------------------------------------
 
 const PUBLIC = process.env.PUBLIC_URL || "";
 
 const ASSETS = {
   background: `${PUBLIC}/assets/rain_background.png`,
   umbrella: `${PUBLIC}/assets/umbrella.png`,
+  shadow: `${PUBLIC}/assets/shadow.png`,
   robot: `${PUBLIC}/assets/Robot Sprite 3.png`,
   cat: `${PUBLIC}/assets/cat.png`,
   elder: `${PUBLIC}/assets/elder.png`,
 };
 
-// --------------------------------------------------
-// GAME SETTINGS
-// --------------------------------------------------
+// -----------------------------------------------
+// SETTINGS
+// -----------------------------------------------
 
 const WIDTH = 900;
 const HEIGHT = 540;
@@ -37,6 +38,12 @@ const CHARACTERS = [
     y: 350,
     width: 118,
     height: 160,
+    shadow: {
+      width: "120%",
+      bottom: "-2px",
+      left: "50%",
+      opacity: 0.5,
+    },
   },
   {
     id: "cat",
@@ -44,6 +51,12 @@ const CHARACTERS = [
     y: 390,
     width: 105,
     height: 90,
+    shadow: {
+      width: "60%",
+      bottom: "-2px",
+      left: "50%",
+      opacity: 0.5,
+    },
   },
   {
     id: "elder",
@@ -51,8 +64,17 @@ const CHARACTERS = [
     y: 310,
     width: 112,
     height: 170,
+    shadow: {
+      width: "110%",
+      bottom: "-10px",
+      left: "55%",
+      opacity: 0.5,
+    },
   },
 ];
+
+const clamp = (value, min, max) =>
+  Math.max(min, Math.min(max, value));
 
 function initialProgress() {
   return {
@@ -74,12 +96,9 @@ function initialCursor() {
   };
 }
 
-const clamp = (value, min, max) =>
-  Math.max(min, Math.min(max, value));
-
-// --------------------------------------------------
+// -----------------------------------------------
 // SCORING
-// --------------------------------------------------
+// -----------------------------------------------
 
 function buildResult(progress) {
   const protectedSeconds = {};
@@ -119,15 +138,16 @@ function buildResult(progress) {
       progress.shelter[mostProtected.id] > 0
         ? mostProtected.id
         : null,
-    duration: Math.round(progress.elapsed * 10) / 10,
+    duration:
+      Math.round(progress.elapsed * 10) / 10,
     completed: true,
     passed: true,
   };
 }
 
-// --------------------------------------------------
+// -----------------------------------------------
 // MAIN COMPONENT
-// --------------------------------------------------
+// -----------------------------------------------
 
 export default function UmbrellaDilemma({
   onScoresChange,
@@ -136,6 +156,7 @@ export default function UmbrellaDilemma({
   const canvasRef = useRef(null);
 
   const [cursor, setCursor] = useState(initialCursor);
+
   const [hud, setHud] = useState({
     ...initialProgress(),
     started: false,
@@ -158,9 +179,9 @@ export default function UmbrellaDilemma({
     completeCallbackRef.current = onComplete;
   }, [onScoresChange, onComplete]);
 
-  // ------------------------------------------------
-  // FINISH THE TEST
-  // ------------------------------------------------
+  // ---------------------------------------------
+  // FINISH GAME
+  // ---------------------------------------------
 
   const finishRound = useCallback(() => {
     if (
@@ -187,9 +208,9 @@ export default function UmbrellaDilemma({
     completeCallbackRef.current?.(result);
   }, []);
 
-  // ------------------------------------------------
-  // RESTART
-  // ------------------------------------------------
+  // ---------------------------------------------
+  // RESET GAME
+  // ---------------------------------------------
 
   function resetRound() {
     startedRef.current = false;
@@ -225,9 +246,9 @@ export default function UmbrellaDilemma({
     });
   }
 
-  // ------------------------------------------------
-  // UMBRELLA POSITION
-  // ------------------------------------------------
+  // ---------------------------------------------
+  // UMBRELLA CONTROLS
+  // ---------------------------------------------
 
   function moveUmbrella(event) {
     if (finishedRef.current) return;
@@ -252,7 +273,6 @@ export default function UmbrellaDilemma({
     umbrellaRef.current = next;
     setCursor(next);
 
-    // Timer starts when player first interacts
     if (!startedRef.current) {
       startedRef.current = true;
 
@@ -297,9 +317,9 @@ export default function UmbrellaDilemma({
     }
   }
 
-  // ------------------------------------------------
+  // ---------------------------------------------
   // RAIN ANIMATION
-  // ------------------------------------------------
+  // ---------------------------------------------
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -315,7 +335,10 @@ export default function UmbrellaDilemma({
 
     function frame(timestamp) {
       const dt = previousTime
-        ? Math.min((timestamp - previousTime) / 1000, 0.05)
+        ? Math.min(
+            (timestamp - previousTime) / 1000,
+            0.05
+          )
         : 0;
 
       previousTime = timestamp;
@@ -323,13 +346,12 @@ export default function UmbrellaDilemma({
       ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
       const umbrella = umbrellaRef.current;
+
       const active =
         startedRef.current &&
         !finishedRef.current;
 
-      // --------------------------------------------
       // SPAWN RAINDROPS
-      // --------------------------------------------
 
       spawnAccumulator += dt * RAIN_PER_SECOND;
 
@@ -345,9 +367,7 @@ export default function UmbrellaDilemma({
         });
       }
 
-      // --------------------------------------------
       // MOVE RAINDROPS
-      // --------------------------------------------
 
       const remainingDrops = [];
 
@@ -359,7 +379,6 @@ export default function UmbrellaDilemma({
 
         let blocked = false;
 
-        // Umbrella collision: curved canopy
         if (
           umbrella.visible &&
           !finishedRef.current
@@ -374,7 +393,6 @@ export default function UmbrellaDilemma({
             const canopyY =
               umbrella.y - 43 + curve;
 
-            // Drop crosses the canopy
             if (
               oldY <= canopyY &&
               drop.y >= canopyY &&
@@ -387,7 +405,6 @@ export default function UmbrellaDilemma({
                 progressRef.current.blocked++;
               }
 
-              // Tiny pixel splash
               splashesRef.current.push({
                 x: drop.x,
                 y: canopyY,
@@ -398,13 +415,10 @@ export default function UmbrellaDilemma({
         }
 
         if (blocked) continue;
-
-        // Remove drops reaching ground
         if (drop.y > HEIGHT - 42) continue;
 
         remainingDrops.push(drop);
 
-        // Pixel-art raindrop
         ctx.fillStyle = "#78bcd7";
 
         ctx.fillRect(
@@ -414,7 +428,6 @@ export default function UmbrellaDilemma({
           Math.round(drop.length)
         );
 
-        // Lighter highlight
         ctx.fillStyle = "#c4f4ff";
 
         ctx.fillRect(
@@ -427,9 +440,7 @@ export default function UmbrellaDilemma({
 
       dropsRef.current = remainingDrops;
 
-      // --------------------------------------------
-      // DRAW SPLASHES
-      // --------------------------------------------
+      // SPLASHES
 
       const remainingSplashes = [];
 
@@ -462,9 +473,7 @@ export default function UmbrellaDilemma({
 
       splashesRef.current = remainingSplashes;
 
-      // --------------------------------------------
       // TRACK PROTECTION
-      // --------------------------------------------
 
       if (active) {
         const progress = progressRef.current;
@@ -475,7 +484,6 @@ export default function UmbrellaDilemma({
         );
 
         for (const character of CHARACTERS) {
-          // Umbrella must be above the character
           const horizontallyAligned =
             Math.abs(
               umbrella.x - character.x
@@ -499,16 +507,11 @@ export default function UmbrellaDilemma({
         }
       }
 
-      // --------------------------------------------
-      // UPDATE REACT HUD
-      // --------------------------------------------
+      // UPDATE HUD
 
       hudAccumulator += dt;
 
-      if (
-        hudAccumulator >= 0.1 &&
-        active
-      ) {
+      if (hudAccumulator >= 0.1 && active) {
         hudAccumulator = 0;
 
         const progress = progressRef.current;
@@ -532,27 +535,21 @@ export default function UmbrellaDilemma({
     };
   }, [finishRound]);
 
-  // ------------------------------------------------
-  // LIVE UI VALUES
-  // ------------------------------------------------
-
   const timePercentage =
     (hud.elapsed / DURATION) * 100;
 
-  // ------------------------------------------------
+  // ---------------------------------------------
   // RENDER
-  // ------------------------------------------------
+  // ---------------------------------------------
 
   return (
     <div className="umbrella-game">
       <style>{`
-        /* Fill the entire browser viewport instead of a 750px card. */
         .umbrella-game {
           position: fixed;
           inset: 0;
           z-index: 1000;
           width: 100vw;
-          height: 100vh;
           height: 100dvh;
           max-width: none;
           margin: 0;
@@ -573,7 +570,7 @@ export default function UmbrellaDilemma({
           box-sizing: border-box;
         }
 
-        /* CHARACTER PROTECTION METERS */
+        /* CHARACTER METERS */
 
         .umbrella-characters {
           display: flex;
@@ -627,7 +624,6 @@ export default function UmbrellaDilemma({
           min-height: 0;
           width: 100%;
           height: auto;
-          aspect-ratio: auto;
           overflow: hidden;
           background: linear-gradient(
             #263e49 0%,
@@ -636,7 +632,6 @@ export default function UmbrellaDilemma({
           );
           border: 0;
           border-radius: 0;
-          cursor: auto;
           touch-action: none;
         }
 
@@ -662,14 +657,36 @@ export default function UmbrellaDilemma({
           z-index: 1;
         }
 
-        .umbrella-character {
+        /* CHARACTERS AND SHADOWS */
+
+        .umbrella-character-wrapper {
           position: absolute;
           z-index: 2;
+          pointer-events: none;
+        }
+
+        .umbrella-character-shadow {
+          position: absolute;
+          transform: translateX(-50%);
+          height: auto;
+          z-index: 0;
+          pointer-events: none;
+          -webkit-user-drag: none;
+        }
+
+        .umbrella-character {
+          position: relative;
+          display: block;
+          width: 100%;
+          height: 100%;
+          z-index: 1;
           object-fit: contain;
           image-rendering: pixelated;
           pointer-events: none;
           -webkit-user-drag: none;
         }
+
+        /* RAIN */
 
         .umbrella-rain {
           position: absolute;
@@ -680,6 +697,8 @@ export default function UmbrellaDilemma({
           image-rendering: pixelated;
           pointer-events: none;
         }
+
+        /* UMBRELLA */
 
         .umbrella-cursor {
           position: absolute;
@@ -741,7 +760,7 @@ export default function UmbrellaDilemma({
           cursor: default;
         }
 
-        /* TIME PROGRESS */
+        /* TIMER */
 
         .umbrella-timer {
           width: 100%;
@@ -781,7 +800,8 @@ export default function UmbrellaDilemma({
           background: #142c2a;
           color: #a2efd8;
           font-size: 45px;
-          box-shadow: 0 0 25px rgba(162, 239, 216, 0.4);
+          box-shadow:
+            0 0 25px rgba(162, 239, 216, 0.4);
         }
 
         @media (max-width: 500px) {
@@ -853,19 +873,21 @@ export default function UmbrellaDilemma({
 
       {/* INTERACTIVE SCENE */}
 
-        <div
-          className="umbrella-stage"
-          style={{
-            cursor: hud.finished ? "auto" : "none",
-          }}
-          aria-label="Move the umbrella to shelter characters from rain"
-          onPointerEnter={moveUmbrella}
-          onPointerMove={moveUmbrella}
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          onPointerLeave={hideUmbrella}
-        >
+      <div
+        className="umbrella-stage"
+        style={{
+          cursor: hud.finished ? "auto" : "none",
+        }}
+        aria-label="Move the umbrella to shelter characters from rain"
+        onPointerEnter={moveUmbrella}
+        onPointerMove={moveUmbrella}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={hideUmbrella}
+      >
+        {/* BACKGROUND */}
+
         <img
           className="umbrella-background"
           src={ASSETS.background}
@@ -875,22 +897,20 @@ export default function UmbrellaDilemma({
 
         <div className="umbrella-ground" />
 
-        {/* CHARACTER SPRITES */}
+        {/* CHARACTERS WITH SHADOWS */}
 
         {CHARACTERS.map((character) => (
-          <img
+          <div
             key={character.id}
-            className="umbrella-character"
-            src={ASSETS[character.id]}
-            alt={character.id}
-            draggable={false}
+            className="umbrella-character-wrapper"
             style={{
               left: `${
                 ((character.x - character.width / 2) /
-                  WIDTH) *
-                100
+                  WIDTH) * 100
               }%`,
-              top: `${(character.y / HEIGHT) * 100}%`,
+              top: `${
+                (character.y / HEIGHT) * 100
+              }%`,
               width: `${
                 (character.width / WIDTH) * 100
               }%`,
@@ -898,7 +918,32 @@ export default function UmbrellaDilemma({
                 (character.height / HEIGHT) * 100
               }%`,
             }}
-          />
+          >
+            {/* SHADOW - BEHIND CHARACTER */}
+
+            {/* CHARACTER SHADOW */}
+            <img
+              className="umbrella-character-shadow"
+              src={ASSETS.shadow}
+              alt=""
+              draggable={false}
+              style={{
+                width: character.shadow.width,
+                bottom: character.shadow.bottom,
+                left: character.shadow.left,
+                opacity: character.shadow.opacity,
+              }}
+            />
+
+            {/* CHARACTER SPRITE */}
+
+            <img
+              className="umbrella-character"
+              src={ASSETS[character.id]}
+              alt={character.id}
+              draggable={false}
+            />
+          </div>
         ))}
 
         {/* ANIMATED RAIN */}
@@ -911,7 +956,7 @@ export default function UmbrellaDilemma({
           aria-hidden="true"
         />
 
-        {/* UMBRELLA FOLLOWING THE CURSOR */}
+        {/* UMBRELLA CURSOR */}
 
         {cursor.visible && !hud.finished && (
           <img
@@ -920,8 +965,12 @@ export default function UmbrellaDilemma({
             alt=""
             draggable={false}
             style={{
-              left: `${(cursor.x / WIDTH) * 100}%`,
-              top: `${(cursor.y / HEIGHT) * 100}%`,
+              left: `${
+                (cursor.x / WIDTH) * 100
+              }%`,
+              top: `${
+                (cursor.y / HEIGHT) * 100
+              }%`,
             }}
           />
         )}
@@ -937,7 +986,7 @@ export default function UmbrellaDilemma({
         )}
       </div>
 
-      {/* CONTROLS AND TIMER */}
+      {/* TIMER AND BUTTONS */}
 
       <div className="umbrella-bottom">
         <button
