@@ -735,7 +735,20 @@ export default function RobotEmotionGame({
           }`}
           onClick={() => setTool("erase")}
         >
-          ⌫
+          <svg
+            width="25"
+            height="25"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m7 21-4-4a2 2 0 0 1 0-2.83L14.17 3a2 2 0 0 1 2.83 0L21 7a2 2 0 0 1 0 2.83L10.83 20a2 2 0 0 1-2.83 0Z" />
+            <path d="m7 11 8 8" />
+            <path d="M5 21h14" />
+          </svg>
         </button>
 
         <button

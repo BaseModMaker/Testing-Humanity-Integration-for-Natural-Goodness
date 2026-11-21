@@ -1,13 +1,13 @@
-import RobotEmotionGame from "./RobotEmotionGame";
+import UmbrellaDilemma from "./UmbrellaDilemma";
 
 export default function App() {
   return (
-    <RobotEmotionGame
+    <UmbrellaDilemma
       onScoresChange={(result) => {
-        console.log("Current scores:", result);
+        console.log("Umbrella score:", result);
       }}
       onComplete={(result) => {
-        console.log("Final result:", result);
+        console.log("Umbrella test completed:", result);
       }}
     />
   );
