@@ -15,6 +15,8 @@ const PUBLIC = process.env.PUBLIC_URL || "";
 
 const ASSETS = {
   background: `${PUBLIC}/assets/rain_background.png`,
+  transition: `${PUBLIC}/assets/rain-transition.png`,
+  sunny: `${PUBLIC}/assets/sunny-background.png`,
   umbrella: `${PUBLIC}/assets/umbrella.png`,
   shadow: `${PUBLIC}/assets/shadow.png`,
   robot: `${PUBLIC}/assets/Robot Sprite 3.png`,
@@ -303,6 +305,7 @@ export default function UmbrellaDilemma({
       previousTime = timestamp;
 
       ctx.clearRect(0, 0, WIDTH, HEIGHT);
+      if (finishedRef.current) return;
 
       const umbrella = umbrellaRef.current;
       const active =
@@ -680,6 +683,24 @@ export default function UmbrellaDilemma({
           pointer-events: none;
         }
 
+        .umbrella-weather {
+          opacity: 0;
+        }
+
+        .umbrella-stage[data-finished="true"] .umbrella-weather {
+          opacity: 1;
+        }
+
+        .umbrella-stage[data-finished="true"] .umbrella-weather-sunny {
+          transition: opacity 650ms ease 900ms;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .umbrella-stage[data-finished="true"] .umbrella-weather-sunny {
+            transition-duration: 0ms;
+          }
+        }
+
         .umbrella-ground {
           position: absolute;
           inset: auto 0 0;
@@ -774,7 +795,6 @@ export default function UmbrellaDilemma({
           inset: 0;
           display: grid;
           place-items: center;
-          background: rgba(248,236,221,.28);
           z-index: 5;
           pointer-events: none;
         }
@@ -863,6 +883,7 @@ export default function UmbrellaDilemma({
       {/* Original interactive canvas/character mechanics are unchanged. */}
       <div
         className="umbrella-stage"
+        data-finished={hud.finished}
         style={{ cursor: hud.finished ? "auto" : "none" }}
         aria-label="Move the umbrella to shelter characters from rain"
         onPointerEnter={moveUmbrella}
@@ -873,6 +894,8 @@ export default function UmbrellaDilemma({
         onPointerLeave={hideUmbrella}
       >
         <img className="umbrella-background" src={ASSETS.background} alt="" draggable={false} />
+        <img className="umbrella-background umbrella-weather" src={ASSETS.transition} alt="" draggable={false} />
+        <img className="umbrella-background umbrella-weather umbrella-weather-sunny" src={ASSETS.sunny} alt="" draggable={false} />
         <div className="umbrella-ground" />
 
         {CHARACTERS.map((character) => (
@@ -910,6 +933,7 @@ export default function UmbrellaDilemma({
         <canvas
           ref={canvasRef}
           className="umbrella-rain"
+          hidden={hud.finished}
           width={WIDTH}
           height={HEIGHT}
           aria-hidden="true"

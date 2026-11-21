@@ -8,10 +8,8 @@ const publicPath = process.env.PUBLIC_URL;
 const GAME_DURATION = 10000;
 
 const DogPettingMiniGame = ({
-    onResult = () => {},
     onContinue = () => {},
 }) => {
-  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [score, setScore] = useState(0);
   const [running, setRunning] = useState(true);
   const [hearts, setHearts] = useState([]);
@@ -22,7 +20,6 @@ const DogPettingMiniGame = ({
   const pointerDown = useRef(false);
   const previousAngle = useRef(null);
   const accumulatedAngle = useRef(0);
-  const lastHeartTime = useRef(0);
   const heartId = useRef(0);
 
   useEffect(() => {
@@ -32,11 +29,7 @@ const DogPettingMiniGame = ({
       }
 
       const elapsed = timestamp - startTime.current;
-      const remaining = Math.max(0, GAME_DURATION - elapsed);
-
-      setTimeLeft(remaining);
-
-      if (remaining <= 0) {
+      if (elapsed >= GAME_DURATION) {
         setRunning(false);
         pointerDown.current = false;
         return;
@@ -277,6 +270,7 @@ const DogPettingMiniGame = ({
         <img
         className="dog-frame"
         src={publicPath+dogFrameSrc}
+        alt=""
         /> 
         <img
         className="dog-image"
@@ -309,7 +303,7 @@ const DogPettingMiniGame = ({
 
       {!running && (
         <div className="dog-overlay">
-          <button onClick={onContinue(score)}>
+          <button onClick={() => onContinue(score)}>
             Continue
           </button>
         </div>

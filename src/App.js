@@ -1,4 +1,7 @@
 import UmbrellaDilemma from "./UmbrellaDilemma";
+import RobotEmotionGame from "./RobotEmotionGame";
+import DrivingMiniGame from "./Driving-minigame";
+import DogPettingMiniGame from "./DogPettingMinigame";
 import { useEffect, useState } from "react";
 import "./App.css";
 
@@ -243,13 +246,15 @@ export default function App() {
     }
   });
 
-  function updateStatistic(field, finalScore) {
-    if (!assessmentFields.includes(field) || !Number.isFinite(finalScore)) {
-      return;
-    }
-
-    const score = Math.max(0, Math.min(100, finalScore));
-    setScores((previous) => ({ ...previous, [field]: score }));
+  function finishGame(nextRoute, results) {
+    const updatedScores = Object.fromEntries(
+      Object.entries(results).map(([field, score]) => [
+        field,
+        Math.max(0, Math.min(100, score)),
+      ])
+    );
+    setScores((previous) => ({ ...previous, ...updatedScores }));
+    window.location.hash = nextRoute;
   }
 
   useEffect(() => {
@@ -278,10 +283,30 @@ export default function App() {
         <main>
           <a href="#/assessments">Back to assessments</a>
           <UmbrellaDilemma onComplete={(result) => {
-            updateStatistic("Preservation", result.scores.rainProtection);
+            finishGame("#/assessments/emotion", {
+              Preservation: result.scores.rainProtection,
+            });
           }} />
         </main>
       );
+
+    case "#/assessments/emotion":
+      return <RobotEmotionGame onComplete={({ average }) => {
+        finishGame("#/assessments/driving", { Empathy: average });
+      }} />;
+
+    case "#/assessments/driving":
+      return <DrivingMiniGame onContinue={(choice) => {
+        finishGame("#/assessments/dog-petting", {
+          Ecology: choice === "left" ? 100 : 0,
+          Adaptability: choice === "both" ? 0 : 100,
+        });
+      }} />;
+
+    case "#/assessments/dog-petting":
+      return <DogPettingMiniGame onContinue={(score) => {
+        finishGame("#/assessments", { Cooperation: score });
+      }} />;
 
     default:
       return <TitleScreen />;

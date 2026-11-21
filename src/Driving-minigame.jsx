@@ -33,9 +33,10 @@ const rightObject = "/assets/cat.png";
 const leftObjectName = "grandma";
 const rightObjectName = "cat";
 const publicPath = process.env.PUBLIC_URL;
+const ignoreChoice = () => {};
 
 const DrivingMiniGame = ({
-  onChoose = () => { },
+  onChoose = ignoreChoice,
   onContinue = () => { },
 
   duration = 6000,
@@ -151,7 +152,7 @@ const DrivingMiniGame = ({
     return () => {
       cancelAnimationFrame(animationFrame.current);
     };
-  }, [running, duration]);
+  }, [running, duration, onChoose]);
 
   // Reset and replay.
   /*  const restart = () => {
@@ -678,7 +679,7 @@ const DrivingMiniGame = ({
                   : rightObjectName}!
           </h2>
 
-          <button onClick={onContinue}>
+          <button onClick={() => onContinue(result)}>
             Continue
           </button>
         </div>
