@@ -95,7 +95,32 @@ function AssessmentRadar({ scores }) {
   );
 }
 
+const passportFields = [
+  ["model", "Model", ["Optimus", "Atlas", "EVE"]],
+  ["serialNumber", "Serial No.", ["SN-01-0851", "SN-10-0851", "SN-11-4757"]],
+  ["parentCompany", "Company", ["Tesla", "OpenAI", "Nvidia"]],
+  ["productionYear", "Prod. Year", ["2024", "2027", "2028"]],
+];
+
 function MainScreen({ scores }) {
+  const [passport, setPassport] = useState(() => {
+    try {
+      return JSON.parse(window.localStorage.getItem("robot-passport")) ?? {};
+    } catch {
+      return {};
+    }
+  });
+
+  function updatePassport(field, value) {
+    const updatedPassport = { ...passport, [field]: value };
+    setPassport(updatedPassport);
+    try {
+      window.localStorage.setItem("robot-passport", JSON.stringify(updatedPassport));
+    } catch {
+      // The fields remain editable when browser storage is unavailable.
+    }
+  }
+
   return (
     <main
       className="assessment-home"
@@ -111,10 +136,24 @@ function MainScreen({ scores }) {
         />
       </div>
       <dl className="passport-details" aria-label="Robot information">
-        {["Model", "Serial Number", "Parent Company", "Prod. Year"].map((label) => (
-          <div key={label}>
-            <dt>{label}:</dt>
-            <dd aria-label="Blank" />
+        {passportFields.map(([field, label, options]) => (
+          <div key={field}>
+            <dt><label htmlFor={`passport-${field}`}>{label}:</label></dt>
+            <dd>
+              <select
+                id={`passport-${field}`}
+                value={passport[field] ?? ""}
+                onChange={(event) => updatePassport(field, event.target.value)}
+              >
+                <option value="">—</option>
+                {passport[field] && !options.includes(passport[field]) && (
+                  <option value={passport[field]}>{passport[field]}</option>
+                )}
+                {options.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </dd>
           </div>
         ))}
       </dl>
@@ -129,7 +168,30 @@ function MainScreen({ scores }) {
 
 export default function App() {
   const [route, setRoute] = useState(() => window.location.hash);
-  const [scores, setScores] = useState({});
+  const [scores, setScores] = useState(() => {
+    try {
+      return JSON.parse(window.localStorage.getItem("robot-assessment-scores")) ?? {};
+    } catch {
+      return {};
+    }
+  });
+
+  function updateStatistic(field, finalScore) {
+    if (!assessmentFields.includes(field) || !Number.isFinite(finalScore)) {
+      return;
+    }
+
+    const score = Math.max(0, Math.min(100, finalScore));
+    setScores((previous) => ({ ...previous, [field]: score }));
+  }
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("robot-assessment-scores", JSON.stringify(scores));
+    } catch {
+      // Scores remain available in memory when browser storage is unavailable.
+    }
+  }, [scores]);
 
   useEffect(() => {
     function updateRoute() {
@@ -149,7 +211,7 @@ export default function App() {
         <main>
           <a href="#/assessments">Back to assessments</a>
           <UmbrellaDilemma onComplete={(result) => {
-            setScores((previous) => ({ ...previous, Preservation: result.scores.rainProtection }));
+            updateStatistic("Preservation", result.scores.rainProtection);
           }} />
         </main>
       );
