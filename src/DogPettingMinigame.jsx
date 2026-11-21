@@ -1,11 +1,13 @@
 
 import React, { useEffect, useRef, useState } from "react";
+import { GameHeader } from "./GameBars";
 
 const dogSrc = "/assets/dog.png";
 const dogLoveSrc = "/assets/dog_tongue.png";
 const dogFrameSrc = "/assets/dog_frame.png";
 const dogAngrySrc = "/assets/DogLockIn.png"
-const publicPath = process.env.PUBLIC_URL;
+const publicPath = process.env.PUBLIC_URL || "";
+const backgroundSrc = "/assets/sunny-background.png";
 const GAME_DURATION = 10000;
 const tailImages = [
     "/assets/dog_tail1.png",
@@ -18,8 +20,10 @@ const TAIL_INTERVAL = 150; // milliseconds between frames
 
 const DogPettingMiniGame = ({
     onContinue = () => { },
+    testLabel = "Test 4 / 4",
 }) => {
     const [score, setScore] = useState(0);
+    const [elapsed, setElapsed] = useState(0);
     const [running, setRunning] = useState(true);
     const [hearts, setHearts] = useState([]);
     const [isPetting, setIsPetting] = useState(false);
@@ -42,7 +46,8 @@ const DogPettingMiniGame = ({
                 startTime.current = timestamp;
             }
 
-            const elapsed = timestamp - startTime.current;
+            const elapsed = Math.min(GAME_DURATION, timestamp - startTime.current);
+            setElapsed(elapsed);
             if (elapsed >= GAME_DURATION) {
                 setRunning(false);
                 pointerDown.current = false;
@@ -93,6 +98,7 @@ const DogPettingMiniGame = ({
             dogLoveSrc,
             dogAngrySrc,
             dogFrameSrc,
+            backgroundSrc,
             ...tailImages,
         ];
 
@@ -205,322 +211,464 @@ const DogPettingMiniGame = ({
         setIsPetting(false);
     };
 
+    // The countdown and its stripe pattern are independent: the track stays fixed.
+    const timeRemainingPercent = Math.max(0, 100 * (1 - elapsed / GAME_DURATION));
+    const remainingSeconds = Math.ceil(Math.max(0, GAME_DURATION - elapsed) / 1000);
+
     return (
-        <div className="dog-game">
-            <style>{`
-            .dog-game {
+      <div className="dog-game">
+        <style>{`
+          .dog-game {
+            --thing-cream: rgb(248, 236, 221);
+            --thing-ink: #43483a;
+            --thing-olive: #74875e;
+            --thing-sage: #a3b879;
+            --thing-track: #e2dfd1;
             position: fixed;
             inset: 0;
+            z-index: 9999;
             width: 100vw;
             height: 100vh;
             height: 100dvh;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            background: black;
-            font-family: Arial, sans-serif;
+            color: var(--thing-ink);
+            background: var(--thing-cream);
+            font-family: "Trebuchet MS", Verdana, sans-serif;
             user-select: none;
-            z-index: 9999;
-            }
+            overscroll-behavior: none;
+          }
+          .dog-game * { box-sizing: border-box; }
+          .dog-game button { font: inherit; }
 
-            .dog-game * {
-            box-sizing: border-box;
-            }
+          /* Shared THING header: same layout and colors as the other games. */
+          .dog-header-content {
+            width: 100%;
+            max-width: 1460px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+          }
+          .dog-header-heading {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 0;
+          }
+          .dog-test-badge {
+            flex: 0 0 auto;
+            padding: 8px 16px;
+            color: #fffaf0;
+            background: var(--thing-olive);
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .03em;
+            white-space: nowrap;
+          }
+          .dog-heading-divider {
+            flex: 0 0 auto;
+            width: 1px;
+            height: 34px;
+            background: #9b9e8c;
+          }
+          .dog-heading-icon {
+            width: 29px;
+            height: 29px;
+            flex: 0 0 auto;
+            color: #536d47;
+          }
+          .dog-title {
+            margin: 0;
+            font-size: clamp(18px, 2.1vw, 26px);
+            font-weight: 700;
+            letter-spacing: -.02em;
+            white-space: nowrap;
+          }
+          .dog-header-right {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: clamp(12px, 2vw, 25px);
+            min-width: 0;
+          }
+          .dog-score-chip {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 12px;
+            border: 1px solid #c8c9b5;
+            border-radius: 9px;
+            background: rgba(255,255,255,.30);
+            white-space: nowrap;
+            font-size: 14px;
+          }
+          .dog-score-chip strong { color: #536d47; font-size: 17px; font-variant-numeric: tabular-nums; }
+          .dog-timer {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: clamp(160px, 21vw, 290px);
+            min-width: 0;
+          }
+          .dog-timer-heading {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #596b4c;
+          }
+          .dog-time-meter {
+            position: relative;
+            width: 100%;
+            height: 14px;
+            border: 1px solid #c7c6b8;
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--thing-track);
+          }
+          .dog-time-fill {
+            position: absolute;
+            inset: 0;
+            background: var(--thing-sage);
+            transition: clip-path .06s linear;
+          }
+          /* Fixed separators: they never scale or move with the fill. */
+          .dog-time-meter::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+              to right,
+              transparent 0 13px,
+              #f8ecdd 13px 16px
+            );
+          }
 
-    .dog-area {
-    position: absolute;
-    inset: 70px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    }
-
-            .dog-image {
-            width: min(75vw, 520px);
-            max-height: 75%;
-            object-fit: contain;
-
-            /* Keep pixel art crisp when enlarged */
+          /* Sunny pixel-art scene takes the full available space. */
+          .dog-scene {
+            position: relative;
+            flex: 1 1 0;
+            min-height: 0;
+            width: 100%;
+            overflow: hidden;
+            isolation: isolate;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #c9d7b3;
+          }
+          .dog-scene-background {
+            position: absolute;
+            inset: 0;
+            z-index: -2;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
             image-rendering: pixelated;
-            image-rendering: crisp-edges;
-
+            pointer-events: none;
+          }
+          .dog-scene-tint {
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background: rgba(248,236,221,.08);
+            pointer-events: none;
+          }
+          .dog-instructions {
+            position: absolute;
+            z-index: 8;
+            top: clamp(12px, 2.5vh, 28px);
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: calc(100% - 30px);
+            padding: 12px 22px;
+            color: #536343;
+            background: rgba(248,236,221,.94);
+            border: 1px solid #c4bda9;
+            border-radius: 12px;
+            box-shadow: 0 6px 22px rgba(50,60,35,.10);
+            font-size: 14px;
+            font-weight: 650;
+            text-align: center;
+          }
+          .dog-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: min(75vw, 520px, 65dvh);
+            aspect-ratio: 1 / 1;
+            flex: 0 0 auto;
+          }
+          .dog-image-clip {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+          }
+          .dog-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
             pointer-events: none;
             user-select: none;
             -webkit-user-drag: none;
-            }
-
-            .pet-area {
+          }
+          .dog-image.punched { animation: dogPunch .3s ease; }
+          @keyframes dogPunch {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            25% { transform: translate(5px,-3px) scale(.94); }
+            50% { transform: translate(-5px,2px) scale(.97); }
+            75% { transform: translate(3px,-1px) scale(.99); }
+          }
+          .dog-tail {
             position: absolute;
-            width: min(48vw, 270px);
-            height: min(48vw, 270px);
-            max-height: 40vh;
-            border-radius: 50%;
-            left: 50%;
-            top: 43%;
-            transform: translate(-50%, -50%);
-            cursor: grab;
-            touch-action: none;
-            z-index: 3;
-            }
-
-            .pet-area:active {
-            cursor: grabbing;
-            }
-
-            .heart {
-            position: absolute;
-            left: var(--heart-left);
-            top: 40%;
-            font-size: 32px;
+            z-index: 1;
+            left: 32%;
+            top: -20%;
+            width: 58%;
+            height: auto;
+            object-fit: contain;
+            transform-origin: right center;
+            image-rendering: pixelated;
             pointer-events: none;
-            animation: heartFloat 0.9s ease-out forwards;
-            z-index: 6;
-            }
-
-            @keyframes heartFloat {
-            0% {
-                opacity: 1;
-                transform: translateY(0) scale(0.5);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-110px) scale(1.4);
-            }
-            }
-
-            .dog-overlay {
+          }
+          .dog-frame {
             position: absolute;
             inset: 0;
-            background: rgba(0,0,0,0.65);
+            z-index: 4;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
+            pointer-events: none;
+            -webkit-user-drag: none;
+          }
+          .pet-area {
+            position: absolute;
+            z-index: 5;
+            left: 50%;
+            top: 43%;
+            width: 52%;
+            height: 52%;
+            max-height: 100%;
+            border-radius: 50%;
+            transform: translate(-50%,-50%);
+            touch-action: none;
+            cursor: grab;
+          }
+          .pet-area:active { cursor: grabbing; }
+          .heart {
+            position: absolute;
+            z-index: 7;
+            left: var(--heart-left);
+            top: 31%;
+            font-size: clamp(23px, 3vw, 34px);
+            pointer-events: none;
+            animation: heartFloat .9s ease-out forwards;
+          }
+          @keyframes heartFloat {
+            0% { opacity: 1; transform: translateY(0) scale(.5); }
+            100% { opacity: 0; transform: translateY(-110px) scale(1.4); }
+          }
+          .impact-emoji {
+            position: absolute;
+            z-index: 7;
+            top: 12%;
+            right: 12%;
+            font-size: clamp(32px, 6vw, 64px);
+            pointer-events: none;
+            animation: impactPop .5s ease-out forwards;
+          }
+          @keyframes impactPop {
+            0% { opacity: 0; transform: scale(.2) rotate(-30deg); }
+            35% { opacity: 1; transform: scale(1.4) rotate(15deg); }
+            70% { opacity: 1; transform: scale(1) rotate(-10deg); }
+            100% { opacity: 0; transform: scale(.7); }
+          }
+
+          /* Completed round: muted backdrop and cream results card. */
+          .dog-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: grid;
+            place-items: center;
+            padding: 18px;
+            background: rgba(34,46,35,.40);
+          }
+          .dog-result-card {
+            width: min(380px, 100%);
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
             gap: 18px;
-            color: white;
-            z-index: 10;
+            padding: 32px 28px;
+            border: 1px solid #c4bda9;
+            border-radius: 18px;
+            background: var(--thing-cream);
+            box-shadow: 0 18px 50px rgba(34,46,35,.18);
             text-align: center;
-            }
-
-            .dog-overlay h2 {
+          }
+          .dog-result-card h2 {
+            margin: 0;
+            font-size: clamp(22px, 3vw, 30px);
+            color: var(--thing-ink);
+          }
+          .dog-result-card p { margin: 0; font-size: 15px; color: #647056; }
+          .dog-result-score {
+            color: #536d47;
             font-size: 34px;
-            margin: 0;
-            }
-
-            .dog-overlay p {
-            font-size: 24px;
-            margin: 0;
-            }
-
-            .dog-overlay button {
-            padding: 13px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+          }
+          .dog-continue {
+            width: 100%;
+            min-height: 46px;
+            padding: 11px 20px;
+            color: #fffaf0;
+            background: #758d61;
+            border: 1px solid #63784b;
+            border-radius: 10px;
+            font-weight: 700;
             cursor: pointer;
-            }
-            .dog-frame {
-                position: absolute;
-                width: min(75vw, 520px);
-                max-height: 75%;
-                object-fit: contain;
-                pointer-events: none;
-                z-index: 4;
-                image-rendering: pixelated;
-                image-rendering: crisp-edges;
-            }
-            .dog-image {
-            transition: transform 0.1s;
-            }
+          }
+          .dog-continue:hover { background: #617c4c; }
 
-            .dog-image.punched {
-            animation: dogPunch 0.25s ease;
-            }
-
-            @keyframes dogPunch {
-            0% {
-                transform: rotate(0deg) scale(1);
-            }
-            30% {
-                transform: rotate(-8deg) scale(0.9);
-            }
-            60% {
-                transform: rotate(8deg) scale(1.05);
-            }
-            100% {
-                transform: rotate(0deg) scale(1);
-            }
-            }
-
-    .dog-container {
-    position: relative;
-    width: min(75vw, 520px);
-    aspect-ratio: 1 / 1;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    }
-
-    /* Dog stays inside the frame */
-    .dog-image-clip {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-    }
-    .dog-tail {
-    position: absolute;
-    width: min(50vw, 300px);
-    max-height: 75%;
-    object-fit: contain;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    pointer-events: none;
-    z-index: 1;
-    left:32%;
-    top:-20%
-
-    /* Position behind the dog's body */
-
-    transform-origin: right center;
-    }
-
-
-    .dog-image.punched {
-    animation: dogPunch 0.3s ease;
-    }
-
-    @keyframes dogPunch {
-    0% {
-        transform: translate(0, 0) scale(1);
-    }
-    25% {
-        transform: translate(5px, -3px) scale(0.94);
-    }
-    50% {
-        transform: translate(-5px, 2px) scale(0.97);
-    }
-    75% {
-        transform: translate(3px, -1px) scale(0.99);
-    }
-    100% {
-        transform: translate(0, 0) scale(1);
-    }
-    }
-
-    .impact-emoji {
-    position: absolute;
-    top: 12%;
-    right: 12%;
-    font-size: clamp(32px, 6vw, 64px);
-    z-index: 6;
-    pointer-events: none;
-    animation: impactPop 0.5s ease-out forwards;
-    }
-
-    @keyframes impactPop {
-    0% {
-        opacity: 0;
-        transform: scale(0.2) rotate(-30deg);
-    }
-    35% {
-        opacity: 1;
-        transform: scale(1.4) rotate(15deg);
-    }
-    70% {
-        opacity: 1;
-        transform: scale(1) rotate(-10deg);
-    }
-    100% {
-        opacity: 0;
-        transform: scale(0.7) rotate(0deg);
-    }
-    }
-            @media (max-width: 500px) {
-            .dog-image {
-                width: 90vw;
-                max-height: 65%;
-            }
-
-            .dog-hint {
-                font-size: 14px;
-            }
-            }
+          @media (max-width: 820px) {
+            .dog-header-content { gap: 12px; }
+            .dog-header-heading { gap: 10px; }
+            .dog-score-chip { padding: 6px 8px; font-size: 12px; }
+            .dog-timer { width: 160px; }
+          }
+          @media (max-width: 640px) {
+            .dog-header-content { flex-wrap: wrap; justify-content: center; gap: 12px; }
+            .dog-header-heading { width: 100%; justify-content: center; }
+            .dog-header-right { width: 100%; justify-content: space-between; }
+            .dog-timer { flex: 1; width: auto; }
+            .dog-test-badge { font-size: 12px; padding: 6px 9px; }
+            .dog-heading-divider { height: 26px; }
+            .dog-heading-icon { width: 24px; height: 24px; }
+            .dog-title { font-size: 18px; }
+            .dog-container { width: min(85vw, 430px, 55dvh); }
+            .dog-instructions { font-size: 12px; padding: 9px 13px; }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .heart, .impact-emoji, .dog-image.punched { animation-duration: .01ms; }
+            .dog-time-fill { transition: none; }
+          }
         `}</style>
 
-            <div className="dog-area">
-                <div className="dog-container">
-                    {isPetting && !isPunched && (
-                        <img
-                            className="dog-tail"
-                            src={publicPath + tailImages[tailFrame]}
-                            alt=""
-                            draggable="false"
-                        />
-                    )}
-                    <div className="dog-image-clip">
-                        <img
-                            className={`dog-image ${isPunched ? "punched" : ""}`}
-                            src={
-                                publicPath +
-                                (isPunched
-                                    ? dogAngrySrc
-                                    : isPetting
-                                        ? dogLoveSrc
-                                        : dogSrc)
-                            }
-                            alt="Dog"
-                            draggable="false"
-                        />
-                    </div>
-
-                    <img
-                        className="dog-frame"
-                        src={publicPath + dogFrameSrc}
-                        alt=""
-                    />
-
-                    {impactEmoji && (
-                        <div className="impact-emoji">
-                            💢
-                        </div>
-                    )}
-                </div>
-
-                <div
-                    className="pet-area"
-                    onClick={handleDogClick}
-                    onPointerDown={handlePointerDown}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={stopPetting}
-                    onPointerCancel={stopPetting}
-                    onLostPointerCapture={stopPetting}
-                />
-
-                {hearts.map((heart) => (
-                    <div
-                        key={heart.id}
-                        className="heart"
-                        style={{
-                            "--heart-left": `${heart.left}%`,
-                        }}
-                    >
-                        ❤️
-                    </div>
-                ))}
+        <GameHeader>
+          <div className="dog-header-content">
+            <div className="dog-header-heading">
+              <span className="dog-test-badge">{testLabel}</span>
+              <span className="dog-heading-divider" aria-hidden="true" />
+              <svg className="dog-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M8.5 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM14 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM19 9.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                <path d="M12 13c-2 0-3 2-4.5 3.5C6 18 7 20 9 20c1.2 0 1.7-.7 3-.7s1.8.7 3 .7c2 0 3-2 1.5-3.5C15 15 14 13 12 13Z" />
+              </svg>
+              <h1 className="dog-title">Dog Petting</h1>
             </div>
-
-            {!running && (
-                <div className="dog-overlay">
-                    <button onClick={() => onContinue(score)}>
-                        Continue
-                    </button>
+            <div className="dog-header-right">
+              <div className="dog-score-chip" aria-live="polite">
+                <span>Kindness points</span>
+                <strong>{score}</strong>
+              </div>
+              <div className="dog-timer">
+                <div className="dog-timer-heading">
+                  <span>Time remaining</span>
+                  <span aria-live="off">{remainingSeconds}s</span>
                 </div>
+                <div
+                  className="dog-time-meter"
+                  role="progressbar"
+                  aria-label="Time remaining"
+                  aria-valuemin={0}
+                  aria-valuemax={GAME_DURATION / 1000}
+                  aria-valuenow={Math.ceil((GAME_DURATION - elapsed) / 1000)}
+                >
+                  <div
+                    className="dog-time-fill"
+                    style={{ clipPath: `inset(0 ${100 - timeRemainingPercent}% 0 0)` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </GameHeader>
+
+        <main className="dog-scene">
+          <img className="dog-scene-background" src={publicPath + backgroundSrc} alt="" draggable={false} />
+          <div className="dog-scene-tint" aria-hidden="true" />
+          {running && (
+            <div className="dog-instructions">
+              Gently pet the dog by moving in circles
+            </div>
+          )}
+
+          <div className="dog-container">
+            {isPetting && !isPunched && (
+              <img
+                className="dog-tail"
+                src={publicPath + tailImages[tailFrame]}
+                alt=""
+                draggable={false}
+              />
             )}
-        </div>
+            <div className="dog-image-clip">
+              <img
+                className={`dog-image ${isPunched ? "punched" : ""}`}
+                src={publicPath + (isPunched ? dogAngrySrc : isPetting ? dogLoveSrc : dogSrc)}
+                alt="Dog"
+                draggable={false}
+              />
+            </div>
+            <img className="dog-frame" src={publicPath + dogFrameSrc} alt="" draggable={false} />
+            <div
+              className="pet-area"
+              aria-label="Pet the dog gently in circles"
+              onClick={handleDogClick}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={stopPetting}
+              onPointerCancel={stopPetting}
+              onLostPointerCapture={stopPetting}
+            />
+            {hearts.map((heart) => (
+              <div key={heart.id} className="heart" style={{ "--heart-left": `${heart.left}%` }}>
+                ❤️
+              </div>
+            ))}
+            {impactEmoji && <div className="impact-emoji">💢</div>}
+          </div>
+
+          {!running && (
+            <div className="dog-overlay">
+              <div className="dog-result-card">
+                <h2>Petting complete!</h2>
+                <p>Kindness points earned</p>
+                <div className="dog-result-score">{score}</div>
+                <button type="button" className="dog-continue" onClick={() => onContinue(score)}>
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
     );
 };
 
