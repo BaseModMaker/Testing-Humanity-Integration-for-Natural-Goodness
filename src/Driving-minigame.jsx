@@ -25,7 +25,7 @@ export default function DrivingMiniGame({
   onChoose = () => {},
   onContinue = () => {},
   duration = 4000,
-  testLabel = "Test 3 / 3",
+  testLabel = "Test 3 / 4",
 }) {
   const [progress, setProgress] = useState(0);
   const [steering, setSteering] = useState(0);
@@ -592,7 +592,7 @@ export default function DrivingMiniGame({
           onLostPointerCapture={handlePointerUp}
         />
 
-        {!result && (
+        {!result && secondsRemaining >= 4 &&  (
           <div className="dg-instructions">
             Hold and turn the steering wheel to start!
           </div>
