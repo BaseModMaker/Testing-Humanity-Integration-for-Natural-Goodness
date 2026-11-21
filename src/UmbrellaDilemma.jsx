@@ -636,7 +636,7 @@ export default function UmbrellaDilemma({
           );
           border: 0;
           border-radius: 0;
-          cursor: none;
+          cursor: auto;
           touch-action: none;
         }
 
@@ -853,16 +853,19 @@ export default function UmbrellaDilemma({
 
       {/* INTERACTIVE SCENE */}
 
-      <div
-        className="umbrella-stage"
-        aria-label="Move the umbrella to shelter characters from rain"
-        onPointerEnter={moveUmbrella}
-        onPointerMove={moveUmbrella}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onPointerLeave={hideUmbrella}
-      >
+        <div
+          className="umbrella-stage"
+          style={{
+            cursor: hud.finished ? "auto" : "none",
+          }}
+          aria-label="Move the umbrella to shelter characters from rain"
+          onPointerEnter={moveUmbrella}
+          onPointerMove={moveUmbrella}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onPointerLeave={hideUmbrella}
+        >
         <img
           className="umbrella-background"
           src={ASSETS.background}
