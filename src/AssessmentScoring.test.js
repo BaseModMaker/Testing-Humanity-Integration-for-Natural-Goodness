@@ -5,11 +5,16 @@ import { getAssessmentOutcome } from './App';
 
 test.each([
   [{ robot: 0, cat: 0, elder: 0 }, 0, 0, 0],
-  [{ robot: 12, cat: 0, elder: 0 }, 50, 0, 0],
-  [{ robot: 0, cat: 12, elder: 0 }, 25, 25, 80],
-  [{ robot: 0, cat: 0, elder: 12 }, 40, 10, 0],
-  [{ robot: 0, cat: 3, elder: 3 }, 16, 9, 20],
-])('applies the umbrella payoffs in proportion to shelter time', (shelter, rainProtection, empathy, ecology) => {
+  [{ robot: 0, cat: 1.99, elder: 0 }, 0, 0, 0],
+  [{ robot: 0, cat: 2, elder: 0 }, 15, 10, 20],
+  [{ robot: 0, cat: 4.99, elder: 0 }, 15, 10, 20],
+  [{ robot: 0, cat: 5, elder: 0 }, 30, 20, 40],
+  [{ robot: 0, cat: 8, elder: 0 }, 40, 30, 60],
+  [{ robot: 11, cat: 0, elder: 0 }, 80, 0, 0],
+  [{ robot: 0, cat: 11, elder: 0 }, 50, 40, 80],
+  [{ robot: 0, cat: 0, elder: 11 }, 65, 25, 0],
+  [{ robot: 5, cat: 5, elder: 2 }, 88, 26, 40],
+])('calculates umbrella scores', (shelter, rainProtection, empathy, ecology) => {
   const result = buildUmbrellaResult({ elapsed: 12, blocked: 150, shelter });
   expect(result.scores).toEqual({ rainProtection, empathy, ecology });
 });

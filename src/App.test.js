@@ -23,8 +23,8 @@ test('runs the games in order and keeps passport data in memory', async () => {
 
   try {
     const { unmount } = render(<App />);
-    expect(screen.queryByRole('status')).toBeNull();
-    fireEvent.change(screen.getByLabelText(/model/i), { target: { value: 'Atlas' } });
+    expect(screen.getByText('Awaiting assessment')).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('textbox', { name: /model/i }), { target: { value: 'Custom robot' } });
     const start = screen.getByRole('link', { name: 'Start assessment' });
     fireEvent.click(start);
     fireEvent.click(await screen.findByRole('button', { name: 'Finish umbrella' }));
@@ -42,7 +42,7 @@ test('runs the games in order and keeps passport data in memory', async () => {
 
     const dog = await screen.findByAltText(/^dog$/i);
     expect(screen.queryByRole('link', { name: 'Start assessment' })).toBeNull();
-    const petArea = dog.parentElement.querySelector('.pet-area');
+    const petArea = dog.closest('.dog-area').querySelector('.pet-area');
     petArea.setPointerCapture = jest.fn();
     const movePetPointer = (type, clientX, clientY) => {
       fireEvent(petArea, new MouseEvent(type, { bubbles: true, clientX, clientY }));
@@ -59,7 +59,8 @@ test('runs the games in order and keeps passport data in memory', async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     await screen.findByRole('link', { name: 'Start assessment' });
-    expect(screen.getByRole('status')).toHaveTextContent('You did not pass the assessment. Average 33.8/100.');
+    expect(screen.getByRole('status')).toHaveTextContent('Refused');
+    expect(screen.getByRole('status')).toHaveTextContent('Average 33.8/100');
     const expected = {
       Preservation: 25, Empathy: 94, Ecology: 40, Cooperation: 10, Adaptability: 0,
     };
@@ -67,7 +68,7 @@ test('runs the games in order and keeps passport data in memory', async () => {
     for (const [field, score] of Object.entries(expected)) {
       expect(radar).toHaveAccessibleName(new RegExp(`${field}: ${score} out of 100`));
     }
-    expect(screen.getByLabelText(/model/i)).toHaveValue('Atlas');
+    expect(screen.getByLabelText(/model/i)).toHaveValue('Custom robot');
     expect(window.localStorage.getItem('robot-assessment-scores')).toBeNull();
     expect(window.localStorage.getItem('robot-passport')).toBeNull();
 

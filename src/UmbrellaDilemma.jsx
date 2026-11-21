@@ -31,13 +31,13 @@ const ASSETS = {
 const WIDTH = 900;
 const HEIGHT = 540;
 const DURATION = 12;
-const CAT_ECOLOGY_POINTS = 80;
+const SHELTER_MILESTONES = [2, 5, 8, 11];
 const RAIN_PER_SECOND = 80;
 
 const CHARACTERS = [
   {
     id: "robot",
-    payoff: { preservation: 50, empathy: 0 },
+    payoffs: [[20, 0, 0], [40, 0, 0], [60, 0, 0], [80, 0, 0]],
     x: 190,
     y: 350,
     width: 118,
@@ -51,7 +51,7 @@ const CHARACTERS = [
   },
   {
     id: "cat",
-    payoff: { preservation: 25, empathy: 25 },
+    payoffs: [[15, 10, 20], [30, 20, 40], [40, 30, 60], [50, 40, 80]],
     x: 450,
     y: 390,
     width: 105,
@@ -65,7 +65,7 @@ const CHARACTERS = [
   },
   {
     id: "elder",
-    payoff: { preservation: 40, empathy: 10 },
+    payoffs: [[18, 6, 0], [35, 12, 0], [50, 18, 0], [65, 25, 0]],
     x: 705,
     y: 310,
     width: 112,
@@ -106,17 +106,27 @@ const clamp = (value, min, max) =>
 // SCORING
 // --------------------------------------------------
 
+function getShelterMilestoneCount(seconds) {
+  return SHELTER_MILESTONES.filter((threshold) => seconds + 1e-9 >= threshold).length;
+}
+
+function getUmbrellaScores(shelter) {
+  const scores = { rainProtection: 0, empathy: 0, ecology: 0 };
+  for (const character of CHARACTERS) {
+    const milestones = getShelterMilestoneCount(shelter[character.id]);
+    const [preservation, empathy, ecology] = character.payoffs[milestones - 1] ?? [0, 0, 0];
+    scores.rainProtection += preservation;
+    scores.empathy += empathy;
+    scores.ecology += ecology;
+  }
+  return scores;
+}
+
 export function buildUmbrellaResult(progress) {
   const protectedSeconds = {};
-  let preservation = 0;
-  let empathy = 0;
-
   for (const character of CHARACTERS) {
     const seconds = progress.shelter[character.id];
     protectedSeconds[character.id] = Math.round(seconds * 10) / 10;
-    const share = clamp(seconds / DURATION, 0, 1);
-    preservation += share * character.payoff.preservation;
-    empathy += share * character.payoff.empathy;
   }
 
   const mostProtected = CHARACTERS.reduce(
@@ -128,16 +138,12 @@ export function buildUmbrellaResult(progress) {
     CHARACTERS[0]
   );
 
-  const score = Math.round(preservation);
+  const scores = getUmbrellaScores(progress.shelter);
 
   return {
     testId: "umbrella-dilemma",
-    score,
-    scores: {
-      rainProtection: score,
-      empathy: Math.round(empathy),
-      ecology: Math.round(CAT_ECOLOGY_POINTS * clamp(progress.shelter.cat / DURATION, 0, 1)),
-    },
+    score: scores.rainProtection,
+    scores,
     blockedDrops: progress.blocked,
     protectedSeconds,
     mostProtected:
@@ -864,12 +870,12 @@ export default function UmbrellaDilemma({
               {CHARACTERS.map((character) => {
                 const sheltered = hud.shelter[character.id] || 0;
                 const percent = Math.min(100, (sheltered / DURATION) * 100);
-                const ecologyPayoff = character.id === "cat" ? `, ${CAT_ECOLOGY_POINTS} Ecology` : "";
-              return (
+                const shelterTime = `${sheltered.toFixed(1)} seconds sheltered`;
+                return (
                   <div
                     className="umbrella-character-card"
                     key={character.id}
-                    title={`${character.id}: ${sheltered.toFixed(1)} seconds sheltered. Full round: ${character.payoff.preservation} Preservation, ${character.payoff.empathy} Empathy${ecologyPayoff}.`}
+                    title={`${character.id}: ${shelterTime}`}
                   >
                     <img src={ASSETS[character.id]} alt={character.id} draggable={false} />
                     <div
@@ -877,6 +883,7 @@ export default function UmbrellaDilemma({
                       role="progressbar"
                       aria-label={`${character.id} shelter time`}
                       aria-valuenow={Math.round(percent)}
+                      aria-valuetext={shelterTime}
                       aria-valuemin={0}
                       aria-valuemax={100}
                     >
@@ -887,7 +894,7 @@ export default function UmbrellaDilemma({
               })}
             </div>
 
-            {/* 20-second countdown, displayed as a shrinking bar */}
+            {/* Countdown displayed as a shrinking bar */}
             <div
               className="umbrella-time-meter"
               role="progressbar"

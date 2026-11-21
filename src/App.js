@@ -99,7 +99,10 @@ function TitleScreen() {
             }}
           />
         </h1>
-        <p className="title-subtitle">Testing Humanity Integration for Natural Goodness</p>
+        <p className="title-subtitle">
+          Testing Humanity Integration<br />
+          for Natural Goodness
+        </p>
         <a className="portal-link" href="#/assessments">Open assessment portal</a>
       </div>
     </main>
@@ -137,7 +140,6 @@ function AssessmentRadar({ scores }) {
 
   return (
     <figure className="passport-radar">
-      <figcaption>Statistics</figcaption>
       <svg viewBox="0 0 350 212" role="img" aria-labelledby="radar-description">
         <title id="radar-description">
           {assessmentFields.map((field, index) => (
@@ -179,10 +181,10 @@ function AssessmentRadar({ scores }) {
 }
 
 const passportFields = [
-  ["model", "Model", ["Optimus", "Atlas", "EVE"]],
-  ["serialNumber", "Serial No.", ["SN-01-0851", "SN-10-0851", "SN-11-4757"]],
-  ["parentCompany", "Company", ["Tesla", "OpenAI", "Nvidia"]],
-  ["productionYear", "Prod. Year", ["2024", "2027", "2028"]],
+  ["model", "Model"],
+  ["serialNumber", "Serial No."],
+  ["parentCompany", "Company"],
+  ["productionYear", "Prod. Year", "numeric"],
 ];
 
 function MainScreen({ scores, passport, updatePassport, completed, startAssessment }) {
@@ -196,6 +198,12 @@ function MainScreen({ scores, passport, updatePassport, completed, startAssessme
         backgroundImage: `url("${process.env.PUBLIC_URL}/assets/empty_passport.png")`,
       }}
     >
+      <div className="passport-spread">
+        <section className="passport-page" aria-labelledby="passport-title">
+          <header className="passport-page-header">
+            <img className="passport-logo" src={`${process.env.PUBLIC_URL}/assets/home_logo.png`} alt="T.H.I.N.G." />
+            <h1 id="passport-title">Robot passport</h1>
+          </header>
       <div className="passport-photo">
         <img
           src={`${process.env.PUBLIC_URL}/assets/Robot%20Sprite%201.png`}
@@ -203,31 +211,44 @@ function MainScreen({ scores, passport, updatePassport, completed, startAssessme
         />
       </div>
       <dl className="passport-details" aria-label="Robot information">
-        {passportFields.map(([field, label, options]) => (
+        {passportFields.map(([field, label, inputMode]) => (
           <div key={field}>
             <dt><label htmlFor={`passport-${field}`}>{label}:</label></dt>
             <dd>
-              <select
+              <input
                 id={`passport-${field}`}
+                type="text"
+                inputMode={inputMode}
                 value={passport[field] ?? ""}
                 onChange={(event) => updatePassport(field, event.target.value)}
-              >
-                <option value="">—</option>
-                {options.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
+              />
             </dd>
           </div>
         ))}
       </dl>
+        </section>
+        <section className="passport-page" aria-labelledby="passport-assessment-title">
+          <header className="passport-page-header passport-review-header">
+            <h2 id="passport-assessment-title">Assessment record</h2>
+          </header>
       <AssessmentRadar scores={scores} />
-      {outcome && (
-        <p className="assessment-outcome" role="status">
-          {outcome.passed ? "Success! You passed the assessment." : "You did not pass the assessment."}
-          {" "}Average {outcome.average.toFixed(1)}/100. Passing requires at least {minimumStatistic} in every statistic and an average of {minimumAverage} or higher.
-        </p>
-      )}
+      <div className="passport-result">
+        <p className="passport-result-label">Passport validation</p>
+        {outcome ? (
+          <div
+            className="assessment-outcome"
+            role="status"
+            title={`Passing requires at least ${minimumStatistic} in every statistic and an average of ${minimumAverage} or higher.`}
+          >
+            <strong className={`passport-stamp${outcome.passed ? "" : " passport-stamp-failed"}`}>
+              {outcome.passed ? "Validated" : "Refused"}
+            </strong>
+            <span>Average {outcome.average.toFixed(1)}/100</span>
+          </div>
+        ) : <span className="passport-pending">Awaiting assessment</span>}
+      </div>
+        </section>
+      </div>
       <a className="portal-link" href="#/assessments/umbrella" onClick={startAssessment}>
         Start assessment
       </a>
