@@ -29,9 +29,9 @@ const backgroundSrc = "/assets/street_background2.png";
 const interiorSrc = "/assets/car-interior.png";
 const wheelSrc = "/assets/steering-wheel2.png";
 const leftObject = "/assets/elder.png";
-const rightObject = "/assets/child.png";
+const rightObject = "/assets/cat.png";
 const leftObjectName = "grandma";
-const rightObjectName = "child";
+const rightObjectName = "cat";
 const publicPath = process.env.PUBLIC_URL;
 
 const DrivingMiniGame = ({
@@ -170,13 +170,13 @@ const DrivingMiniGame = ({
   */
   // Calculate the perspective animation of the objects.
   // Objects grow as they approach the car
-  const objectScale = 0.25 + progress * 1.75;
+  const objectScale = 0.01 + progress * 3;
 
   // Objects move down the windscreen
   const objectY = 25 + progress * 30;
 
   // Distance between the objects increases over time
-  const objectSpread = 8 + progress * 30;
+  const objectSpread = 8 + progress * 15;
 
   // Calculate each object's horizontal position
   const leftPosition = 50 - objectSpread / 2;
@@ -212,25 +212,25 @@ const DrivingMiniGame = ({
         /* Car interior overlay */
         .dg-interior {
           position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
+          inset: -3px;
+          width: calc(100% + 6px);
+          height: calc(100% + 6px);
           object-fit: fill;
           z-index: 5;
           pointer-events: none;
           user-select: none;
         }
 
-        /* Actual steering wheel image */
         .dg-wheel-image {
           position: absolute;
-          width: 28%;
+
+          width: clamp(150px, 24vw, 320px);
           height: auto;
+          aspect-ratio: 1 / 1;
 
-          bottom: 3%;
-          left: 25%;
+          bottom: 4%;
+          left: 36%;
 
-          transform: translateX(-50%) rotate(0deg);
           transform-origin: center center;
 
           z-index: 8;
@@ -244,17 +244,20 @@ const DrivingMiniGame = ({
           cursor: grabbing;
         }
         .driving-game {
-          position: relative;
-          width: 100%;
-          height: clamp(460px, 70vh, 720px);
-          min-height: 460px;
+          position: fixed;
+          inset: 0;
+          width: 100vw;
+          height: 100vh;
+          height: 100dvh;
+          min-height: 0;
           overflow: hidden;
           background: #a6c7df;
-          border-radius: 12px;
+          border-radius: 0;
           user-select: none;
           font-family: Arial, sans-serif;
           color: white;
           isolation: isolate;
+          z-index: 9999;
         }
 
         .driving-game * {
@@ -632,7 +635,7 @@ const DrivingMiniGame = ({
         alt="Steering wheel"
         draggable="false"
         style={{
-          transform: `rotate(${steering}deg)`,
+          transform: `translateX(-50%) rotate(${steering}deg)`,
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
