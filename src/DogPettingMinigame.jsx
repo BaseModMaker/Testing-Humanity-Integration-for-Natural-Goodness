@@ -25,6 +25,7 @@ const DogPettingMiniGame = ({
     const [score, setScore] = useState(0);
     const [elapsed, setElapsed] = useState(0);
     const [running, setRunning] = useState(true);
+    const [started, setStarted] = useState(false);
     const [hearts, setHearts] = useState([]);
     const [isPetting, setIsPetting] = useState(false);
     const [isPunched, setIsPunched] = useState(false);
@@ -40,7 +41,10 @@ const DogPettingMiniGame = ({
     const accumulatedAngle = useRef(0);
     const heartId = useRef(0);
 
+    // Do not begin counting down until the first pointer press on the dog.
     useEffect(() => {
+        if (!started || !running) return;
+
         const animate = (timestamp) => {
             if (startTime.current === null) {
                 startTime.current = timestamp;
@@ -66,7 +70,7 @@ const DogPettingMiniGame = ({
                 cancelAnimationFrame(animationFrame.current);
             }
         };
-    }, []);
+    }, [started, running]);
 
     useEffect(() => {
         if (hearts.length === 0) return;
@@ -169,6 +173,11 @@ const DogPettingMiniGame = ({
     const handlePointerDown = (event) => {
         if (!running) return;
 
+        if (!started) {
+            startTime.current = performance.now();
+            setStarted(true);
+        }
+
         event.preventDefault();
         event.currentTarget.setPointerCapture(event.pointerId);
 
@@ -213,7 +222,6 @@ const DogPettingMiniGame = ({
 
     // The countdown and its stripe pattern are independent: the track stays fixed.
     const timeRemainingPercent = Math.max(0, 100 * (1 - elapsed / GAME_DURATION));
-    const remainingSeconds = Math.ceil(Math.max(0, GAME_DURATION - elapsed) / 1000);
 
     return (
       <div className="dog-game">
@@ -588,10 +596,6 @@ const DogPettingMiniGame = ({
                 <strong>{score}</strong>
               </div>
               <div className="dog-timer">
-                <div className="dog-timer-heading">
-                  <span>Time remaining</span>
-                  <span aria-live="off">{remainingSeconds}s</span>
-                </div>
                 <div
                   className="dog-time-meter"
                   role="progressbar"
