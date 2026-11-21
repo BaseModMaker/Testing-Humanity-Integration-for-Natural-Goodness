@@ -5,7 +5,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { GameHeader, GameFooter } from "./GameBars";
+import { GameHeader } from "./GameBars";
 
 // --------------------------------------------------
 // ASSETS
@@ -520,7 +520,7 @@ export default function UmbrellaDilemma({
   // THEMED UI - based on the THING solarpunk mockup
   // ------------------------------------------------
 
-  // The footer bar begins full and empties as the round progresses.
+  // Header countdown bar starts full and empties as the round progresses.
   const timeRemainingPercent = Math.max(
     0,
     100 * (1 - hud.elapsed / DURATION)
@@ -616,6 +616,15 @@ export default function UmbrellaDilemma({
           margin-right: 11px;
           vertical-align: -3px;
           font-family: system-ui, sans-serif;
+        }
+
+        .umbrella-header-status {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: clamp(12px, 2vw, 24px);
+          flex: 1 1 auto;
+          min-width: 0;
         }
 
         .umbrella-characters {
@@ -759,19 +768,12 @@ export default function UmbrellaDilemma({
           filter: drop-shadow(0 5px 3px rgba(0,0,0,.12));
         }
 
-        /* FOOTER: single centered, decreasing time bar */
-        .umbrella-footer-content {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          max-width: 1100px;
-          margin: 0 auto;
-        }
-
+        /* Countdown bar in the shared header (no footer) */
         .umbrella-time-meter {
-          width: min(58vw, 560px);
-          height: 17px;
+          flex: 0 1 210px;
+          width: clamp(110px, 17vw, 210px);
+          min-width: 100px;
+          height: 15px;
           border: 1px solid #c7c6b8;
           border-radius: 20px;
           background: var(--thing-track);
@@ -827,10 +829,16 @@ export default function UmbrellaDilemma({
           .umbrella-test-badge { min-height: 31px; font-size: 12px; padding: 5px 10px; }
           .umbrella-heading-divider { height: 26px; }
           .umbrella-title-symbol { font-size: 21px; margin-right: 5px; }
-          .umbrella-characters { justify-content: center; width: 100%; }
+          .umbrella-header-status {
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+            gap: 8px 12px;
+          }
+          .umbrella-characters { justify-content: center; width: auto; }
           .umbrella-character-card { flex: 1; max-width: 105px; justify-content: center; }
           .umbrella-character-meter { width: 38px; }
-          .umbrella-time-meter { width: min(80vw, 560px); }
+          .umbrella-time-meter { flex: 1 1 150px; width: auto; max-width: 320px; }
         }
         @media (max-width: 370px) {
           .umbrella-title { font-size: 15px; }
@@ -842,7 +850,7 @@ export default function UmbrellaDilemma({
       <GameHeader>
         <div className="umbrella-header-content">
           <div className="umbrella-heading">
-            <span className="umbrella-test-badge">Test 2 / 2</span>
+            <span className="umbrella-test-badge">Test 1 / 4</span>
             <span className="umbrella-heading-divider" aria-hidden="true" />
             <h1 className="umbrella-title">
               <span className="umbrella-title-symbol" aria-hidden="true">☂</span>
@@ -850,32 +858,50 @@ export default function UmbrellaDilemma({
             </h1>
           </div>
 
-          {/* Per-game header content: characters being protected */}
-          <div className="umbrella-characters" aria-label="Character protection progress">
-            {CHARACTERS.map((character) => {
-              const sheltered = hud.shelter[character.id] || 0;
-              const percent = Math.min(100, (sheltered / DURATION) * 100);
-              const ecologyPayoff = character.id === "cat" ? `, ${CAT_ECOLOGY_POINTS} Ecology` : "";
+          <div className="umbrella-header-status">
+            {/* Individual character protection indicators */}
+            <div className="umbrella-characters" aria-label="Character protection progress">
+              {CHARACTERS.map((character) => {
+                const sheltered = hud.shelter[character.id] || 0;
+                const percent = Math.min(100, (sheltered / DURATION) * 100);
+                const ecologyPayoff = character.id === "cat" ? `, ${CAT_ECOLOGY_POINTS} Ecology` : "";
               return (
-                <div
-                  className="umbrella-character-card"
-                  key={character.id}
-                  title={`${character.id}: ${sheltered.toFixed(1)} seconds sheltered. Full round: ${character.payoff.preservation} Preservation, ${character.payoff.empathy} Empathy${ecologyPayoff}.`}
-                >
-                  <img src={ASSETS[character.id]} alt={character.id} draggable={false} />
                   <div
-                    className="umbrella-character-meter"
-                    role="progressbar"
-                    aria-label={`${character.id} shelter time`}
-                    aria-valuenow={Math.round(percent)}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
+                    className="umbrella-character-card"
+                    key={character.id}
+                    title={`${character.id}: ${sheltered.toFixed(1)} seconds sheltered. Full round: ${character.payoff.preservation} Preservation, ${character.payoff.empathy} Empathy${ecologyPayoff}.`}
                   >
-                    <div className="umbrella-character-fill" style={{ width: `${percent}%` }} />
+                    <img src={ASSETS[character.id]} alt={character.id} draggable={false} />
+                    <div
+                      className="umbrella-character-meter"
+                      role="progressbar"
+                      aria-label={`${character.id} shelter time`}
+                      aria-valuenow={Math.round(percent)}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    >
+                      <div className="umbrella-character-fill" style={{ width: `${percent}%` }} />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+
+            {/* 20-second countdown, displayed as a shrinking bar */}
+            <div
+              className="umbrella-time-meter"
+              role="progressbar"
+              aria-label="Time remaining"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(timeRemainingPercent)}
+              aria-valuetext={`${Math.ceil(remainingSeconds)} seconds remaining`}
+            >
+              <div
+                className="umbrella-time-fill"
+                style={{ width: `${timeRemainingPercent}%` }}
+              />
+            </div>
           </div>
         </div>
       </GameHeader>
@@ -958,25 +984,6 @@ export default function UmbrellaDilemma({
           </div>
         )}
       </div>
-
-      <GameFooter>
-        <div className="umbrella-footer-content">
-          <div
-            className="umbrella-time-meter"
-            role="progressbar"
-            aria-label="Time remaining"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(timeRemainingPercent)}
-            aria-valuetext={`${Math.ceil(remainingSeconds)} seconds remaining`}
-          >
-            <div
-              className="umbrella-time-fill"
-              style={{ width: `${timeRemainingPercent}%` }}
-            />
-          </div>
-        </div>
-      </GameFooter>
     </div>
   );
 }

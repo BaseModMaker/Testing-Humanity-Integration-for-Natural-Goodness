@@ -2,138 +2,170 @@
 import React, { useEffect, useRef, useState } from "react";
 
 const dogSrc = "/assets/dog.png";
-const dogLoveSrc ="/assets/dog_tongue.png";
-const dogFrameSrc="/assets/dog_frame.png";
+const dogLoveSrc = "/assets/dog_tongue.png";
+const dogFrameSrc = "/assets/dog_frame.png";
+const dogAngrySrc = "/assets/DogLockIn.png"
 const publicPath = process.env.PUBLIC_URL;
 const GAME_DURATION = 10000;
 
 const DogPettingMiniGame = ({
-    onContinue = () => {},
+    onContinue = () => { },
 }) => {
-  const [score, setScore] = useState(0);
-  const [running, setRunning] = useState(true);
-  const [hearts, setHearts] = useState([]);
-  const [isPetting, setIsPetting] = useState(false);
+    const [score, setScore] = useState(0);
+    const [running, setRunning] = useState(true);
+    const [hearts, setHearts] = useState([]);
+    const [isPetting, setIsPetting] = useState(false);
+    const [isPunched, setIsPunched] = useState(false);
+    const [impactEmoji, setImpactEmoji] = useState(false);
 
-  const startTime = useRef(null);
-  const animationFrame = useRef(null);
-  const pointerDown = useRef(false);
-  const previousAngle = useRef(null);
-  const accumulatedAngle = useRef(0);
-  const heartId = useRef(0);
+    const clickTimes = useRef([]);
+    const punchTimeout = useRef(null);
 
-  useEffect(() => {
-    const animate = (timestamp) => {
-      if (startTime.current === null) {
-        startTime.current = timestamp;
-      }
+    const startTime = useRef(null);
+    const animationFrame = useRef(null);
+    const pointerDown = useRef(false);
+    const previousAngle = useRef(null);
+    const accumulatedAngle = useRef(0);
+    const heartId = useRef(0);
 
-      const elapsed = timestamp - startTime.current;
-      if (elapsed >= GAME_DURATION) {
-        setRunning(false);
-        pointerDown.current = false;
-        return;
-      }
+    useEffect(() => {
+        const animate = (timestamp) => {
+            if (startTime.current === null) {
+                startTime.current = timestamp;
+            }
 
-      animationFrame.current =
-        requestAnimationFrame(animate);
+            const elapsed = timestamp - startTime.current;
+            if (elapsed >= GAME_DURATION) {
+                setRunning(false);
+                pointerDown.current = false;
+                return;
+            }
+
+            animationFrame.current =
+                requestAnimationFrame(animate);
+        };
+
+        animationFrame.current =
+            requestAnimationFrame(animate);
+
+        return () => {
+            if (animationFrame.current !== null) {
+                cancelAnimationFrame(animationFrame.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (hearts.length === 0) return;
+
+        const timeout = setTimeout(() => {
+            setHearts((current) =>
+                current.filter((heart) => Date.now() - heart.createdAt < 900)
+            );
+        }, 900);
+
+        return () => clearTimeout(timeout);
+    }, [hearts]);
+
+    const getAngle = (event, element) => {
+        const rect = element.getBoundingClientRect();
+
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        return Math.atan2(
+            event.clientY - centerY,
+            event.clientX - centerX
+        );
     };
 
-    animationFrame.current =
-      requestAnimationFrame(animate);
+    const addHeart = () => {
+        const id = heartId.current++;
 
-    return () => {
-      if (animationFrame.current !== null) {
-        cancelAnimationFrame(animationFrame.current);
-      }
+        setHearts((current) => [
+            ...current,
+            {
+                id,
+                createdAt: Date.now(),
+                left: 40 + Math.random() * 20,
+            },
+        ]);
     };
-  }, []);
 
-  useEffect(() => {
-    if (hearts.length === 0) return;
+    const handleDogClick = () => {
+        if (!running) return;
 
-    const timeout = setTimeout(() => {
-      setHearts((current) =>
-        current.filter((heart) => Date.now() - heart.createdAt < 900)
-      );
-    }, 900);
+        const now = Date.now();
 
-    return () => clearTimeout(timeout);
-  }, [hearts]);
+        clickTimes.current = clickTimes.current.filter(
+            (time) => now - time < 350
+        );
 
-  const getAngle = (event, element) => {
-    const rect = element.getBoundingClientRect();
+        clickTimes.current.push(now);
 
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
+        if (clickTimes.current.length >= 3) {
+            setScore((current) => current - 20);
+            setIsPunched(true);
+            setImpactEmoji(true);
+            clickTimes.current = [];
 
-    return Math.atan2(
-      event.clientY - centerY,
-      event.clientX - centerX
-    );
-  };
+            clearTimeout(punchTimeout.current);
 
-  const addHeart = () => {
-    const id = heartId.current++;
-
-    setHearts((current) => [
-      ...current,
-      {
-        id,
-        createdAt: Date.now(),
-        left: 40 + Math.random() * 20,
-      },
-    ]);
-  };
+            punchTimeout.current = setTimeout(() => {
+                setIsPunched(false);
+                setImpactEmoji(false);
+            }, 500);
+        }
+    };
 
     const handlePointerDown = (event) => {
-    if (!running) return;
+        if (!running) return;
 
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
+        event.preventDefault();
+        event.currentTarget.setPointerCapture(event.pointerId);
 
-    setIsPetting(true);
+        setIsPetting(true);
 
-    pointerDown.current = true;
-    previousAngle.current = getAngle(
-        event,
-        event.currentTarget
-    );
-    accumulatedAngle.current = 0;
+        pointerDown.current = true;
+        previousAngle.current = getAngle(
+            event,
+            event.currentTarget
+        );
+        accumulatedAngle.current = 0;
     };
 
-  const handlePointerMove = (event) => {
-    if (!running || !pointerDown.current) return;
+    const handlePointerMove = (event) => {
+        if (!running || !pointerDown.current) return;
 
-    const angle = getAngle(event, event.currentTarget);
+        const angle = getAngle(event, event.currentTarget);
 
-    let delta = angle - previousAngle.current;
+        let delta = angle - previousAngle.current;
 
-    if (delta > Math.PI) delta -= Math.PI * 2;
-    if (delta < -Math.PI) delta += Math.PI * 2;
+        if (delta > Math.PI) delta -= Math.PI * 2;
+        if (delta < -Math.PI) delta += Math.PI * 2;
 
-    previousAngle.current = angle;
+        previousAngle.current = angle;
 
-    accumulatedAngle.current += Math.abs(delta);
+        accumulatedAngle.current += Math.abs(delta);
 
-    if (accumulatedAngle.current >= Math.PI * 2) {
-      accumulatedAngle.current -= Math.PI * 2;
+        if (accumulatedAngle.current >= Math.PI * 2) {
+            accumulatedAngle.current -= Math.PI * 2;
 
-      setScore((current) => current + 10);
-      addHeart();
-    }
-  };
+            setScore((current) => current + 10);
+            addHeart();
+        }
+    };
 
     const stopPetting = () => {
-    pointerDown.current = false;
-    previousAngle.current = null;
-    accumulatedAngle.current = 0;
-    setIsPetting(false);
+        pointerDown.current = false;
+        previousAngle.current = null;
+        accumulatedAngle.current = 0;
+        setIsPetting(false);
     };
 
-  return (
-    <div className="dog-game">
-      <style>{`
+    return (
+        <div className="dog-game">
+            <style>{`
         .dog-game {
           position: fixed;
           inset: 0;
@@ -151,13 +183,13 @@ const DogPettingMiniGame = ({
           box-sizing: border-box;
         }
 
-        .dog-area {
-          position: absolute;
-          inset: 100px 0 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
+.dog-area {
+  position: absolute;
+  inset: 70px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
         .dog-image {
         width: min(75vw, 520px);
@@ -254,6 +286,101 @@ const DogPettingMiniGame = ({
             image-rendering: pixelated;
             image-rendering: crisp-edges;
         }
+        .dog-image {
+        transition: transform 0.1s;
+        }
+
+        .dog-image.punched {
+        animation: dogPunch 0.25s ease;
+        }
+
+        @keyframes dogPunch {
+        0% {
+            transform: rotate(0deg) scale(1);
+        }
+        30% {
+            transform: rotate(-8deg) scale(0.9);
+        }
+        60% {
+            transform: rotate(8deg) scale(1.05);
+        }
+        100% {
+            transform: rotate(0deg) scale(1);
+        }
+        }
+
+.dog-container {
+  position: relative;
+  width: min(75vw, 520px);
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dog stays inside the frame */
+.dog-image-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+
+.dog-image.punched {
+  animation: dogPunch 0.3s ease;
+}
+
+@keyframes dogPunch {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(5px, -3px) scale(0.94);
+  }
+  50% {
+    transform: translate(-5px, 2px) scale(0.97);
+  }
+  75% {
+    transform: translate(3px, -1px) scale(0.99);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+.impact-emoji {
+  position: absolute;
+  top: 12%;
+  right: 12%;
+  font-size: clamp(32px, 6vw, 64px);
+  z-index: 6;
+  pointer-events: none;
+  animation: impactPop 0.5s ease-out forwards;
+}
+
+@keyframes impactPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-30deg);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.4) rotate(15deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1) rotate(-10deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.7) rotate(0deg);
+  }
+}
         @media (max-width: 500px) {
           .dog-image {
             width: 90vw;
@@ -266,50 +393,70 @@ const DogPettingMiniGame = ({
         }
       `}</style>
 
-      <div className="dog-area">
-        <img
-        className="dog-frame"
-        src={publicPath+dogFrameSrc}
-        alt=""
-        /> 
-        <img
-        className="dog-image"
-        src={publicPath + (isPetting ? dogLoveSrc : dogSrc)}
-        alt="Dog"
-        draggable="false"
-        />
+            <div className="dog-area">
+                <div className="dog-container">
+                    <div className="dog-image-clip">
+                        <img
+                            key={isPunched ? "angry" : isPetting ? "petting" : "normal"}
+                            className={`dog-image ${isPunched ? "punched" : ""}`}
+                            src={
+                                publicPath +
+                                (isPunched
+                                    ? dogAngrySrc
+                                    : isPetting
+                                        ? dogLoveSrc
+                                        : dogSrc)
+                            }
+                            alt="Dog"
+                            draggable="false"
+                        />
+                    </div>
 
-        <div
-        className="pet-area"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={stopPetting}
-        onPointerCancel={stopPetting}
-        onLostPointerCapture={stopPetting}
-        />
+                    <img
+                        className="dog-frame"
+                        src={publicPath + dogFrameSrc}
+                        alt=""
+                    />
 
-        {hearts.map((heart) => (
-          <div
-            key={heart.id}
-            className="heart"
-            style={{
-              "--heart-left": `${heart.left}%`,
-            }}
-          >
-            ❤️
-          </div>
-        ))}
-      </div>
+                    {impactEmoji && (
+                        <div className="impact-emoji">
+                            💢
+                        </div>
+                    )}
+                </div>
 
-      {!running && (
-        <div className="dog-overlay">
-          <button onClick={() => onContinue(score)}>
-            Continue
-          </button>
+                <div
+                    className="pet-area"
+                    onClick={handleDogClick}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={stopPetting}
+                    onPointerCancel={stopPetting}
+                    onLostPointerCapture={stopPetting}
+                />
+
+                {hearts.map((heart) => (
+                    <div
+                        key={heart.id}
+                        className="heart"
+                        style={{
+                            "--heart-left": `${heart.left}%`,
+                        }}
+                    >
+                        ❤️
+                    </div>
+                ))}
+            </div>
+
+            {!running && (
+                <div className="dog-overlay">
+                    <button onClick={() => onContinue(score)}>
+                        Continue
+                    </button>
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default DogPettingMiniGame;
