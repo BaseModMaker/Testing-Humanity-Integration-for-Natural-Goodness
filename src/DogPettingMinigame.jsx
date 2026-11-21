@@ -309,7 +309,7 @@ const DogPettingMiniGame = ({
 
       {!running && (
         <div className="dog-overlay">
-          <button onClick={onContinue}>
+          <button onClick={onContinue(score)}>
             Continue
           </button>
         </div>
