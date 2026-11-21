@@ -5,10 +5,11 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import { GameHeader, GameFooter } from "./GameBars";
 
-// -----------------------------------------------
+// --------------------------------------------------
 // ASSETS
-// -----------------------------------------------
+// --------------------------------------------------
 
 const PUBLIC = process.env.PUBLIC_URL || "";
 
@@ -21,9 +22,9 @@ const ASSETS = {
   elder: `${PUBLIC}/assets/elder.png`,
 };
 
-// -----------------------------------------------
-// SETTINGS
-// -----------------------------------------------
+// --------------------------------------------------
+// GAME SETTINGS
+// --------------------------------------------------
 
 const WIDTH = 900;
 const HEIGHT = 540;
@@ -39,10 +40,10 @@ const CHARACTERS = [
     width: 118,
     height: 160,
     shadow: {
-      width: "120%",
-      bottom: "-2px",
+      width: "100%",
+      bottom: "-12px",
       left: "50%",
-      opacity: 0.5,
+      opacity: 0.8,
     },
   },
   {
@@ -52,10 +53,10 @@ const CHARACTERS = [
     width: 105,
     height: 90,
     shadow: {
-      width: "60%",
-      bottom: "-2px",
+      width: "100%",
+      bottom: "-12px",
       left: "50%",
-      opacity: 0.5,
+      opacity: 0.8,
     },
   },
   {
@@ -65,16 +66,13 @@ const CHARACTERS = [
     width: 112,
     height: 170,
     shadow: {
-      width: "110%",
-      bottom: "-10px",
-      left: "55%",
-      opacity: 0.5,
+      width: "100%",
+      bottom: "-12px",
+      left: "50%",
+      opacity: 0.8,
     },
   },
 ];
-
-const clamp = (value, min, max) =>
-  Math.max(min, Math.min(max, value));
 
 function initialProgress() {
   return {
@@ -96,9 +94,12 @@ function initialCursor() {
   };
 }
 
-// -----------------------------------------------
+const clamp = (value, min, max) =>
+  Math.max(min, Math.min(max, value));
+
+// --------------------------------------------------
 // SCORING
-// -----------------------------------------------
+// --------------------------------------------------
 
 function buildResult(progress) {
   const protectedSeconds = {};
@@ -138,16 +139,15 @@ function buildResult(progress) {
       progress.shelter[mostProtected.id] > 0
         ? mostProtected.id
         : null,
-    duration:
-      Math.round(progress.elapsed * 10) / 10,
+    duration: Math.round(progress.elapsed * 10) / 10,
     completed: true,
     passed: true,
   };
 }
 
-// -----------------------------------------------
+// --------------------------------------------------
 // MAIN COMPONENT
-// -----------------------------------------------
+// --------------------------------------------------
 
 export default function UmbrellaDilemma({
   onScoresChange,
@@ -156,7 +156,6 @@ export default function UmbrellaDilemma({
   const canvasRef = useRef(null);
 
   const [cursor, setCursor] = useState(initialCursor);
-
   const [hud, setHud] = useState({
     ...initialProgress(),
     started: false,
@@ -179,9 +178,9 @@ export default function UmbrellaDilemma({
     completeCallbackRef.current = onComplete;
   }, [onScoresChange, onComplete]);
 
-  // ---------------------------------------------
-  // FINISH GAME
-  // ---------------------------------------------
+  // ------------------------------------------------
+  // FINISH THE TEST
+  // ------------------------------------------------
 
   const finishRound = useCallback(() => {
     if (
@@ -208,9 +207,9 @@ export default function UmbrellaDilemma({
     completeCallbackRef.current?.(result);
   }, []);
 
-  // ---------------------------------------------
-  // RESET GAME
-  // ---------------------------------------------
+  // ------------------------------------------------
+  // RESTART
+  // ------------------------------------------------
 
   function resetRound() {
     startedRef.current = false;
@@ -246,9 +245,9 @@ export default function UmbrellaDilemma({
     });
   }
 
-  // ---------------------------------------------
-  // UMBRELLA CONTROLS
-  // ---------------------------------------------
+  // ------------------------------------------------
+  // UMBRELLA POSITION
+  // ------------------------------------------------
 
   function moveUmbrella(event) {
     if (finishedRef.current) return;
@@ -273,6 +272,7 @@ export default function UmbrellaDilemma({
     umbrellaRef.current = next;
     setCursor(next);
 
+    // Timer starts when player first interacts
     if (!startedRef.current) {
       startedRef.current = true;
 
@@ -317,9 +317,9 @@ export default function UmbrellaDilemma({
     }
   }
 
-  // ---------------------------------------------
+  // ------------------------------------------------
   // RAIN ANIMATION
-  // ---------------------------------------------
+  // ------------------------------------------------
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -335,10 +335,7 @@ export default function UmbrellaDilemma({
 
     function frame(timestamp) {
       const dt = previousTime
-        ? Math.min(
-            (timestamp - previousTime) / 1000,
-            0.05
-          )
+        ? Math.min((timestamp - previousTime) / 1000, 0.05)
         : 0;
 
       previousTime = timestamp;
@@ -346,12 +343,13 @@ export default function UmbrellaDilemma({
       ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
       const umbrella = umbrellaRef.current;
-
       const active =
         startedRef.current &&
         !finishedRef.current;
 
+      // --------------------------------------------
       // SPAWN RAINDROPS
+      // --------------------------------------------
 
       spawnAccumulator += dt * RAIN_PER_SECOND;
 
@@ -367,7 +365,9 @@ export default function UmbrellaDilemma({
         });
       }
 
+      // --------------------------------------------
       // MOVE RAINDROPS
+      // --------------------------------------------
 
       const remainingDrops = [];
 
@@ -379,6 +379,7 @@ export default function UmbrellaDilemma({
 
         let blocked = false;
 
+        // Umbrella collision: curved canopy
         if (
           umbrella.visible &&
           !finishedRef.current
@@ -393,6 +394,7 @@ export default function UmbrellaDilemma({
             const canopyY =
               umbrella.y - 43 + curve;
 
+            // Drop crosses the canopy
             if (
               oldY <= canopyY &&
               drop.y >= canopyY &&
@@ -405,6 +407,7 @@ export default function UmbrellaDilemma({
                 progressRef.current.blocked++;
               }
 
+              // Tiny pixel splash
               splashesRef.current.push({
                 x: drop.x,
                 y: canopyY,
@@ -415,10 +418,13 @@ export default function UmbrellaDilemma({
         }
 
         if (blocked) continue;
+
+        // Remove drops reaching ground
         if (drop.y > HEIGHT - 42) continue;
 
         remainingDrops.push(drop);
 
+        // Pixel-art raindrop
         ctx.fillStyle = "#78bcd7";
 
         ctx.fillRect(
@@ -428,6 +434,7 @@ export default function UmbrellaDilemma({
           Math.round(drop.length)
         );
 
+        // Lighter highlight
         ctx.fillStyle = "#c4f4ff";
 
         ctx.fillRect(
@@ -440,7 +447,9 @@ export default function UmbrellaDilemma({
 
       dropsRef.current = remainingDrops;
 
-      // SPLASHES
+      // --------------------------------------------
+      // DRAW SPLASHES
+      // --------------------------------------------
 
       const remainingSplashes = [];
 
@@ -473,7 +482,9 @@ export default function UmbrellaDilemma({
 
       splashesRef.current = remainingSplashes;
 
+      // --------------------------------------------
       // TRACK PROTECTION
+      // --------------------------------------------
 
       if (active) {
         const progress = progressRef.current;
@@ -484,6 +495,7 @@ export default function UmbrellaDilemma({
         );
 
         for (const character of CHARACTERS) {
+          // Umbrella must be above the character
           const horizontallyAligned =
             Math.abs(
               umbrella.x - character.x
@@ -507,11 +519,16 @@ export default function UmbrellaDilemma({
         }
       }
 
-      // UPDATE HUD
+      // --------------------------------------------
+      // UPDATE REACT HUD
+      // --------------------------------------------
 
       hudAccumulator += dt;
 
-      if (hudAccumulator >= 0.1 && active) {
+      if (
+        hudAccumulator >= 0.1 &&
+        active
+      ) {
         hudAccumulator = 0;
 
         const progress = progressRef.current;
@@ -535,103 +552,157 @@ export default function UmbrellaDilemma({
     };
   }, [finishRound]);
 
-  const timePercentage =
-    (hud.elapsed / DURATION) * 100;
+  // ------------------------------------------------
+  // THEMED UI - based on the THING solarpunk mockup
+  // ------------------------------------------------
 
-  // ---------------------------------------------
-  // RENDER
-  // ---------------------------------------------
+  const careScore = Math.min(
+    100,
+    Math.round((hud.blocked / DROPS_FOR_100) * 100)
+  );
+  const timeLeft = Math.max(0, Math.ceil(DURATION - hud.elapsed));
 
   return (
     <div className="umbrella-game">
       <style>{`
         .umbrella-game {
+          --thing-cream: rgb(248, 236, 221);
+          --thing-ink: #43483a;
+          --thing-olive: #788d66;
+          --thing-olive-dark: #556e4b;
+          --thing-sage: #9ab772;
+          --thing-line: #777b68;
+          --thing-track: #dfddd0;
           position: fixed;
           inset: 0;
           z-index: 1000;
-          width: 100vw;
-          height: 100dvh;
-          max-width: none;
-          margin: 0;
-          padding: 0;
           display: flex;
           flex-direction: column;
-          align-items: stretch;
-          gap: 0;
-          overflow: hidden;
-          overscroll-behavior: none;
-          background: #142c2a;
-          color: #9dfaff;
-          font-family: sans-serif;
-          user-select: none;
-        }
-
-        .umbrella-game * {
+          width: 100vw;
+          height: 100vh;
+          height: 100dvh;
           box-sizing: border-box;
+          overflow: hidden;
+          border: 1px solid var(--thing-ink);
+          border-radius: 14px;
+          background: var(--thing-cream);
+          color: var(--thing-ink);
+          font-family: "Trebuchet MS", Verdana, sans-serif;
+          user-select: none;
+          overscroll-behavior: none;
         }
 
-        /* CHARACTER METERS */
+        .umbrella-game * { box-sizing: border-box; }
+
+        /* HEADER: test label, title, and customizable character HUD */
+        .umbrella-header-content {
+          width: 100%;
+          max-width: 1460px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 24px;
+        }
+
+        .umbrella-heading {
+          display: flex;
+          align-items: center;
+          gap: 19px;
+          min-width: 0;
+          flex: 0 1 auto;
+        }
+
+        .umbrella-test-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          background: var(--thing-olive);
+          color: #fffaf0;
+          border-radius: 8px;
+          min-height: 36px;
+          padding: 7px 16px;
+          font-size: 15px;
+          letter-spacing: 0.04em;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .umbrella-heading-divider {
+          height: 34px;
+          width: 1px;
+          background: #9b9e8c;
+          flex-shrink: 0;
+        }
+
+        .umbrella-title {
+          font-size: clamp(18px, 2.05vw, 26px);
+          font-weight: 700;
+          line-height: 1.12;
+          letter-spacing: -0.02em;
+          margin: 0;
+          white-space: nowrap;
+        }
+
+        .umbrella-title-symbol {
+          font-size: 29px;
+          line-height: 1;
+          margin-right: 11px;
+          vertical-align: -3px;
+          font-family: system-ui, sans-serif;
+        }
 
         .umbrella-characters {
           display: flex;
-          flex: 0 0 auto;
-          justify-content: center;
           align-items: center;
-          gap: 14px;
-          width: 100%;
-          padding: max(8px, env(safe-area-inset-top)) 12px 8px;
-          background: #142c2a;
+          gap: 12px;
+          flex: 0 1 auto;
+          min-width: 0;
         }
 
         .umbrella-character-card {
           display: flex;
           align-items: center;
-          gap: 9px;
-          padding: 6px 12px;
-          border: 1px solid #50766d;
-          background: #142c2a;
-          border-radius: 12px;
-          min-width: 115px;
+          gap: 7px;
+          min-width: 90px;
+          padding: 5px 9px;
+          border: 1px solid #c8c9b5;
+          border-radius: 9px;
+          background: rgba(255,255,255,.30);
         }
 
         .umbrella-character-card img {
-          width: 32px;
-          height: 38px;
+          display: block;
+          width: 30px;
+          height: 35px;
           object-fit: contain;
           image-rendering: pixelated;
         }
 
         .umbrella-character-meter {
-          width: clamp(38px, 9vw, 165px);
+          width: clamp(34px, 5vw, 65px);
           height: 8px;
-          border-radius: 2px;
-          background: #314640;
           overflow: hidden;
+          border-radius: 20px;
+          border: 1px solid #c5c8b5;
+          background: var(--thing-track);
         }
 
         .umbrella-character-fill {
           height: 100%;
-          background: #9ef9db;
-          box-shadow: 0 0 8px #9ef9db;
-          transition: width 0.1s linear;
+          background: var(--thing-sage);
+          transition: width .12s linear;
         }
 
-        /* GAME SCENE */
-
+        /* SCENE: preserve the pixel artwork and the original game */
         .umbrella-stage {
           position: relative;
           flex: 1 1 0;
           min-height: 0;
           width: 100%;
-          height: auto;
           overflow: hidden;
-          background: linear-gradient(
-            #263e49 0%,
-            #49665d 65%,
-            #3c5144 100%
-          );
-          border: 0;
-          border-radius: 0;
+          background: #92b9bd;
           touch-action: none;
         }
 
@@ -642,22 +713,18 @@ export default function UmbrellaDilemma({
           height: 100%;
           object-fit: cover;
           image-rendering: pixelated;
-          pointer-events: none;
           z-index: 0;
+          pointer-events: none;
         }
 
         .umbrella-ground {
           position: absolute;
-          left: 0;
-          bottom: 0;
-          width: 100%;
-          height: 10%;
-          background: rgba(13, 29, 29, 0.18);
-          pointer-events: none;
+          inset: auto 0 0;
+          height: 16%;
+          background: linear-gradient(transparent, rgba(35,60,52,.13));
           z-index: 1;
+          pointer-events: none;
         }
-
-        /* CHARACTERS AND SHADOWS */
 
         .umbrella-character-wrapper {
           position: absolute;
@@ -676,17 +743,15 @@ export default function UmbrellaDilemma({
 
         .umbrella-character {
           position: relative;
+          z-index: 1;
           display: block;
           width: 100%;
           height: 100%;
-          z-index: 1;
           object-fit: contain;
           image-rendering: pixelated;
           pointer-events: none;
           -webkit-user-drag: none;
         }
-
-        /* RAIN */
 
         .umbrella-rain {
           position: absolute;
@@ -698,8 +763,6 @@ export default function UmbrellaDilemma({
           pointer-events: none;
         }
 
-        /* UMBRELLA */
-
         .umbrella-cursor {
           position: absolute;
           width: 30%;
@@ -710,174 +773,217 @@ export default function UmbrellaDilemma({
           pointer-events: none;
           -webkit-user-drag: none;
           z-index: 4;
-          filter: drop-shadow(
-            0 5px 3px rgba(0, 0, 0, 0.22)
-          );
+          filter: drop-shadow(0 5px 3px rgba(0,0,0,.12));
         }
 
-        /* CONTROLS */
-
-        .umbrella-bottom {
+        /* FOOTER: mockup-inspired Care Score */
+        .umbrella-footer-content {
           display: flex;
-          flex: 0 0 auto;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+          width: 100%;
+          max-width: 1100px;
+          margin: 0 auto;
+        }
+
+        .umbrella-care-content {
+          display: flex;
           align-items: center;
           justify-content: center;
-          gap: 12px;
-          width: 100%;
-          padding: 8px 12px 4px;
-          background: #142c2a;
+          gap: 16px;
+          min-width: 0;
+          flex: 1;
         }
 
-        .umbrella-button {
-          display: grid;
-          place-items: center;
-          width: 48px;
-          height: 48px;
-          border: 1px solid #50766d;
-          border-radius: 12px;
-          color: #b4e7df;
-          background: #142c2a;
+        .umbrella-care-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 9px;
+          font-size: 16px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .umbrella-care-leaf {
           font-size: 25px;
-          cursor: pointer;
-          transition: background 0.15s;
+          line-height: 1;
         }
 
-        .umbrella-button:hover:not(:disabled) {
-          background: #244b45;
-        }
-
-        .umbrella-button.confirm {
-          background: #a2efd8;
-          color: #123e37;
-        }
-
-        .umbrella-button.confirm:hover:not(:disabled) {
-          background: #c8ffeb;
-        }
-
-        .umbrella-button:disabled {
-          opacity: 0.35;
-          cursor: default;
-        }
-
-        /* TIMER */
-
-        .umbrella-timer {
-          width: 100%;
-          max-width: 300px;
-          height: 12px;
-          border: 1px solid #50766d;
-          border-radius: 4px;
-          background: #142c2a;
+        .umbrella-care-meter {
+          width: min(36vw, 340px);
+          min-width: 100px;
+          height: 17px;
+          border: 1px solid #c7c6b8;
+          border-radius: 20px;
+          background: var(--thing-track);
           overflow: hidden;
         }
 
-        .umbrella-timer-fill {
+        .umbrella-care-fill {
           height: 100%;
-          background: #83cfc0;
-          transition: width 0.1s linear;
+          border-radius: 20px;
+          background: repeating-linear-gradient(
+            to right,
+            var(--thing-sage) 0 13px,
+            #e0ead1 13px 15px
+          );
+          transition: width .14s ease-out;
         }
 
-        /* COMPLETION */
+        .umbrella-care-number {
+          min-width: 66px;
+          font-size: 17px;
+          font-weight: 700;
+          white-space: nowrap;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .umbrella-care-total { color: #6e705f; font-weight: 400; }
+
+        .umbrella-actions {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          flex-shrink: 0;
+        }
+
+        .umbrella-control {
+          height: 40px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid #a6aa94;
+          border-radius: 8px;
+          padding: 0 14px;
+          background: rgba(255,255,255,.38);
+          color: var(--thing-ink);
+          font: inherit;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background-color .15s ease;
+        }
+
+        .umbrella-control:hover:not(:disabled) { background: #e9e7d4; }
+        .umbrella-control:focus-visible { outline: 3px solid #8ca77d; outline-offset: 2px; }
+        .umbrella-control:disabled { opacity: .42; cursor: default; }
+        .umbrella-control.primary {
+          color: #fffdf1;
+          background: var(--thing-olive-dark);
+          border-color: var(--thing-olive-dark);
+        }
+        .umbrella-control.primary:hover:not(:disabled) { background: #405b39; }
+        .umbrella-time {
+          font-size: 13px;
+          color: #747866;
+          font-variant-numeric: tabular-nums;
+          white-space: nowrap;
+        }
 
         .umbrella-finished {
           position: absolute;
           inset: 0;
           display: grid;
           place-items: center;
-          background: rgba(8, 30, 28, 0.35);
+          background: rgba(248,236,221,.28);
           z-index: 5;
           pointer-events: none;
         }
-
         .umbrella-finished-symbol {
           display: grid;
           place-items: center;
-          width: 80px;
-          height: 80px;
+          width: 90px;
+          height: 90px;
           border-radius: 50%;
-          border: 3px solid #a2efd8;
-          background: #142c2a;
-          color: #a2efd8;
-          font-size: 45px;
-          box-shadow:
-            0 0 25px rgba(162, 239, 216, 0.4);
+          border: 3px solid #6c8851;
+          background: var(--thing-cream);
+          color: #6c8851;
+          font-size: 54px;
+          box-shadow: 0 5px 24px rgba(26,44,29,.2);
         }
 
-        @media (max-width: 500px) {
-          .umbrella-character-card {
-            min-width: 0;
-            padding: 5px;
-            gap: 4px;
-          }
+        @media (max-width: 1000px) {
+          .umbrella-header-content { gap: 12px; }
+          .umbrella-characters { gap: 5px; }
+          .umbrella-character-card { min-width: 0; padding: 4px 5px; }
+          .umbrella-character-card img { width: 24px; height: 30px; }
+          .umbrella-character-meter { width: 33px; }
+          .umbrella-heading { gap: 12px; }
+        }
 
-          .umbrella-character-card img {
-            width: 25px;
-            height: 30px;
-          }
-
-          .umbrella-character-meter {
-            width: 38px;
-          }
-
-          .umbrella-characters {
-            gap: 6px;
-          }
-
-          .umbrella-button {
-            width: 42px;
-            height: 42px;
-          }
+        @media (max-width: 720px) {
+          .umbrella-game { border-radius: 0; }
+          .umbrella-header-content { flex-direction: column; gap: 11px; }
+          .umbrella-heading { justify-content: center; }
+          .umbrella-title { font-size: 19px; }
+          .umbrella-test-badge { min-height: 31px; font-size: 12px; padding: 5px 10px; }
+          .umbrella-heading-divider { height: 26px; }
+          .umbrella-title-symbol { font-size: 21px; margin-right: 5px; }
+          .umbrella-characters { justify-content: center; width: 100%; }
+          .umbrella-character-card { flex: 1; max-width: 105px; justify-content: center; }
+          .umbrella-character-meter { width: 38px; }
+          .umbrella-footer-content { flex-wrap: wrap; gap: 10px; }
+          .umbrella-care-content { order: 0; flex: 1 1 100%; gap: 9px; }
+          .umbrella-care-meter { width: min(42vw, 220px); min-width: 70px; }
+          .umbrella-care-label { font-size: 13px; }
+          .umbrella-care-leaf { font-size: 19px; }
+          .umbrella-care-number { min-width: 55px; font-size: 14px; }
+          .umbrella-actions { order: 1; margin: 0 auto; }
+          .umbrella-time { order: 2; margin-left: auto; }
+          .umbrella-control { height: 35px; font-size: 12px; }
+        }
+        @media (max-width: 370px) {
+          .umbrella-title { font-size: 15px; }
+          .umbrella-title-symbol { display: none; }
+          .umbrella-heading { gap: 8px; }
         }
       `}</style>
 
-      {/* CHARACTER PROTECTION METERS */}
+      <GameHeader>
+        <div className="umbrella-header-content">
+          <div className="umbrella-heading">
+            <span className="umbrella-test-badge">Test 2 / 2</span>
+            <span className="umbrella-heading-divider" aria-hidden="true" />
+            <h1 className="umbrella-title">
+              <span className="umbrella-title-symbol" aria-hidden="true">☂</span>
+              The Umbrella Dilemma
+            </h1>
+          </div>
 
-      <div className="umbrella-characters">
-        {CHARACTERS.map((character) => {
-          const sheltered =
-            hud.shelter[character.id] || 0;
-
-          return (
-            <div
-              className="umbrella-character-card"
-              key={character.id}
-              aria-label={
-                `${character.id}: ` +
-                `${sheltered.toFixed(1)} seconds sheltered`
-              }
-            >
-              <img
-                src={ASSETS[character.id]}
-                alt=""
-                draggable={false}
-              />
-
-              <div className="umbrella-character-meter">
+          {/* Per-game header content: characters being protected */}
+          <div className="umbrella-characters" aria-label="Character protection progress">
+            {CHARACTERS.map((character) => {
+              const sheltered = hud.shelter[character.id] || 0;
+              const percent = Math.min(100, (sheltered / DURATION) * 100);
+              return (
                 <div
-                  className="umbrella-character-fill"
-                  style={{
-                    width: `${
-                      Math.min(
-                        100,
-                        (sheltered / DURATION) * 100
-                      )
-                    }%`,
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                  className="umbrella-character-card"
+                  key={character.id}
+                  title={`${character.id}: ${sheltered.toFixed(1)} seconds sheltered`}
+                >
+                  <img src={ASSETS[character.id]} alt={character.id} draggable={false} />
+                  <div
+                    className="umbrella-character-meter"
+                    role="progressbar"
+                    aria-label={`${character.id} shelter time`}
+                    aria-valuenow={Math.round(percent)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  >
+                    <div className="umbrella-character-fill" style={{ width: `${percent}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </GameHeader>
 
-      {/* INTERACTIVE SCENE */}
-
+      {/* Original interactive canvas/character mechanics are unchanged. */}
       <div
         className="umbrella-stage"
-        style={{
-          cursor: hud.finished ? "auto" : "none",
-        }}
+        style={{ cursor: hud.finished ? "auto" : "none" }}
         aria-label="Move the umbrella to shelter characters from rain"
         onPointerEnter={moveUmbrella}
         onPointerMove={moveUmbrella}
@@ -886,42 +992,20 @@ export default function UmbrellaDilemma({
         onPointerCancel={handlePointerUp}
         onPointerLeave={hideUmbrella}
       >
-        {/* BACKGROUND */}
-
-        <img
-          className="umbrella-background"
-          src={ASSETS.background}
-          alt=""
-          draggable={false}
-        />
-
+        <img className="umbrella-background" src={ASSETS.background} alt="" draggable={false} />
         <div className="umbrella-ground" />
-
-        {/* CHARACTERS WITH SHADOWS */}
 
         {CHARACTERS.map((character) => (
           <div
             key={character.id}
             className="umbrella-character-wrapper"
             style={{
-              left: `${
-                ((character.x - character.width / 2) /
-                  WIDTH) * 100
-              }%`,
-              top: `${
-                (character.y / HEIGHT) * 100
-              }%`,
-              width: `${
-                (character.width / WIDTH) * 100
-              }%`,
-              height: `${
-                (character.height / HEIGHT) * 100
-              }%`,
+              left: `${((character.x - character.width / 2) / WIDTH) * 100}%`,
+              top: `${(character.y / HEIGHT) * 100}%`,
+              width: `${(character.width / WIDTH) * 100}%`,
+              height: `${(character.height / HEIGHT) * 100}%`,
             }}
           >
-            {/* SHADOW - BEHIND CHARACTER */}
-
-            {/* CHARACTER SHADOW */}
             <img
               className="umbrella-character-shadow"
               src={ASSETS.shadow}
@@ -934,9 +1018,6 @@ export default function UmbrellaDilemma({
                 opacity: character.shadow.opacity,
               }}
             />
-
-            {/* CHARACTER SPRITE */}
-
             <img
               className="umbrella-character"
               src={ASSETS[character.id]}
@@ -946,8 +1027,6 @@ export default function UmbrellaDilemma({
           </div>
         ))}
 
-        {/* ANIMATED RAIN */}
-
         <canvas
           ref={canvasRef}
           className="umbrella-rain"
@@ -956,8 +1035,6 @@ export default function UmbrellaDilemma({
           aria-hidden="true"
         />
 
-        {/* UMBRELLA CURSOR */}
-
         {cursor.visible && !hud.finished && (
           <img
             className="umbrella-cursor"
@@ -965,65 +1042,61 @@ export default function UmbrellaDilemma({
             alt=""
             draggable={false}
             style={{
-              left: `${
-                (cursor.x / WIDTH) * 100
-              }%`,
-              top: `${
-                (cursor.y / HEIGHT) * 100
-              }%`,
+              left: `${(cursor.x / WIDTH) * 100}%`,
+              top: `${(cursor.y / HEIGHT) * 100}%`,
             }}
           />
         )}
 
-        {/* FINISHED STATE */}
-
         {hud.finished && (
           <div className="umbrella-finished">
-            <div className="umbrella-finished-symbol">
-              ✓
-            </div>
+            <div className="umbrella-finished-symbol" aria-label="Test complete">✓</div>
           </div>
         )}
       </div>
 
-      {/* TIMER AND BUTTONS */}
+      <GameFooter>
+        <div className="umbrella-footer-content">
+          <div className="umbrella-time" aria-label={`${timeLeft} seconds remaining`}>
+            {timeLeft}s left
+          </div>
 
-      <div className="umbrella-bottom">
-        <button
-          type="button"
-          className="umbrella-button"
-          aria-label="Restart game"
-          onClick={resetRound}
-        >
-          ↺
-        </button>
+          {/* Per-game footer content: Care Score */}
+          <div className="umbrella-care-content">
+            <span className="umbrella-care-label">
+              <span className="umbrella-care-leaf" aria-hidden="true">🌱</span>
+              Care Score
+            </span>
+            <div
+              className="umbrella-care-meter"
+              role="progressbar"
+              aria-label="Care score"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={careScore}
+            >
+              <div className="umbrella-care-fill" style={{ width: `${careScore}%` }} />
+            </div>
+            <span className="umbrella-care-number">
+              {careScore} <span className="umbrella-care-total">/ 100</span>
+            </span>
+          </div>
 
-        <div
-          className="umbrella-timer"
-          role="progressbar"
-          aria-label="Time elapsed"
-          aria-valuemin={0}
-          aria-valuemax={DURATION}
-          aria-valuenow={Math.round(hud.elapsed)}
-        >
-          <div
-            className="umbrella-timer-fill"
-            style={{
-              width: `${timePercentage}%`,
-            }}
-          />
+          <div className="umbrella-actions">
+            <button className="umbrella-control" type="button" onClick={resetRound}>
+              Restart
+            </button>
+            <button
+              className="umbrella-control primary"
+              type="button"
+              disabled={!hud.started || hud.finished}
+              onClick={finishRound}
+            >
+              Finish ✓
+            </button>
+          </div>
         </div>
-
-        <button
-          type="button"
-          className="umbrella-button confirm"
-          aria-label="Save score and finish"
-          disabled={!hud.started || hud.finished}
-          onClick={finishRound}
-        >
-          ✓
-        </button>
-      </div>
+      </GameFooter>
     </div>
   );
 }
