@@ -13,9 +13,9 @@ import React, {
 const PUBLIC = process.env.PUBLIC_URL || "";
 
 const ASSETS = {
-  background: `${PUBLIC}/assets/umbrella-bg.png`,
+  background: `${PUBLIC}/assets/rain_background.png`,
   umbrella: `${PUBLIC}/assets/umbrella.png`,
-  robot: `${PUBLIC}/assets/robot.png`,
+  robot: `${PUBLIC}/assets/Robot Sprite 3.png`,
   cat: `${PUBLIC}/assets/cat.png`,
   elder: `${PUBLIC}/assets/elder.png`,
 };
@@ -34,7 +34,7 @@ const CHARACTERS = [
   {
     id: "robot",
     x: 190,
-    y: 320,
+    y: 350,
     width: 118,
     height: 160,
   },
@@ -539,18 +539,6 @@ export default function UmbrellaDilemma({
   const timePercentage =
     (hud.elapsed / DURATION) * 100;
 
-  const rainScore = Math.min(
-    100,
-    Math.round(
-      (hud.blocked / DROPS_FOR_100) * 100
-    )
-  );
-
-  const activeScoreBars =
-    rainScore > 0
-      ? Math.ceil(rainScore / 10)
-      : 0;
-
   // ------------------------------------------------
   // RENDER
   // ------------------------------------------------
@@ -558,14 +546,24 @@ export default function UmbrellaDilemma({
   return (
     <div className="umbrella-game">
       <style>{`
+        /* Fill the entire browser viewport instead of a 750px card. */
         .umbrella-game {
-          width: 100%;
-          max-width: 750px;
-          margin: 0 auto;
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+          width: 100vw;
+          height: 100vh;
+          height: 100dvh;
+          max-width: none;
+          margin: 0;
+          padding: 0;
           display: flex;
           flex-direction: column;
-          align-items: center;
-          gap: 13px;
+          align-items: stretch;
+          gap: 0;
+          overflow: hidden;
+          overscroll-behavior: none;
+          background: #142c2a;
           color: #9dfaff;
           font-family: sans-serif;
           user-select: none;
@@ -579,10 +577,13 @@ export default function UmbrellaDilemma({
 
         .umbrella-characters {
           display: flex;
+          flex: 0 0 auto;
           justify-content: center;
           align-items: center;
           gap: 14px;
           width: 100%;
+          padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+          background: #142c2a;
         }
 
         .umbrella-character-card {
@@ -604,7 +605,7 @@ export default function UmbrellaDilemma({
         }
 
         .umbrella-character-meter {
-          width: 65px;
+          width: clamp(38px, 9vw, 165px);
           height: 8px;
           border-radius: 2px;
           background: #314640;
@@ -622,16 +623,19 @@ export default function UmbrellaDilemma({
 
         .umbrella-stage {
           position: relative;
+          flex: 1 1 0;
+          min-height: 0;
           width: 100%;
-          aspect-ratio: 900 / 540;
+          height: auto;
+          aspect-ratio: auto;
           overflow: hidden;
           background: linear-gradient(
             #263e49 0%,
             #49665d 65%,
             #3c5144 100%
           );
-          border: 2px solid #50766d;
-          border-radius: 12px;
+          border: 0;
+          border-radius: 0;
           cursor: none;
           touch-action: none;
         }
@@ -679,9 +683,9 @@ export default function UmbrellaDilemma({
 
         .umbrella-cursor {
           position: absolute;
-          width: 20%;
+          width: 30%;
           height: auto;
-          transform: translate(-50%, -33%);
+          transform: translate(-50%, -43%);
           object-fit: contain;
           image-rendering: pixelated;
           pointer-events: none;
@@ -696,10 +700,13 @@ export default function UmbrellaDilemma({
 
         .umbrella-bottom {
           display: flex;
+          flex: 0 0 auto;
           align-items: center;
           justify-content: center;
           gap: 12px;
           width: 100%;
+          padding: 8px 12px 4px;
+          background: #142c2a;
         }
 
         .umbrella-button {
@@ -750,29 +757,6 @@ export default function UmbrellaDilemma({
           height: 100%;
           background: #83cfc0;
           transition: width 0.1s linear;
-        }
-
-        /* LIVE SCORE */
-
-        .umbrella-score {
-          display: flex;
-          justify-content: center;
-          gap: 5px;
-        }
-
-        .umbrella-score span {
-          width: 15px;
-          height: 7px;
-          border-radius: 2px;
-          background: #314640;
-          transition:
-            background 0.12s,
-            box-shadow 0.12s;
-        }
-
-        .umbrella-score span.lit {
-          background: #9ef9db;
-          box-shadow: 0 0 8px #9ef9db;
         }
 
         /* COMPLETION */
@@ -987,26 +971,6 @@ export default function UmbrellaDilemma({
         >
           ✓
         </button>
-      </div>
-
-      {/* LIVE RAIN PROTECTION SCORE */}
-
-      <div
-        className="umbrella-score"
-        role="progressbar"
-        aria-label="Rain protection score"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={rainScore}
-      >
-        {Array.from({ length: 10 }, (_, i) => (
-          <span
-            key={i}
-            className={
-              i < activeScoreBars ? "lit" : ""
-            }
-          />
-        ))}
       </div>
     </div>
   );
