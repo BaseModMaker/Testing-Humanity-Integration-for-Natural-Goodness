@@ -604,7 +604,7 @@ export default function UmbrellaDilemma({
         }
 
         .umbrella-character-meter {
-          width: 65px;
+          width: 165px;
           height: 8px;
           border-radius: 2px;
           background: #314640;
@@ -679,9 +679,9 @@ export default function UmbrellaDilemma({
 
         .umbrella-cursor {
           position: absolute;
-          width: 20%;
+          width: 30%;
           height: auto;
-          transform: translate(-50%, -33%);
+          transform: translate(-50%, -43%);
           object-fit: contain;
           image-rendering: pixelated;
           pointer-events: none;
