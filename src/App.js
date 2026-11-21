@@ -1,12 +1,37 @@
 import UmbrellaDilemma from "./UmbrellaDilemma";
 import { useEffect, useState } from "react";
+import "./App.css";
 
 function TitleScreen() {
   return (
-    <main>
-      <h1>T.H.I.N.G</h1>
-      <p>Testing Humanity Integration for Natural Goodness</p>
-      <a href="#/assessments">Open assessment portal</a>
+    <main
+      style={{
+        minHeight: "100vh",
+        backgroundImage: `url("${process.env.PUBLIC_URL}/assets/thing_background.png")`,
+        backgroundPosition: "center",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        textAlign: "center",
+      }}
+    >
+      <h1 style={{ margin: "0 0 1rem" }}>
+        <img
+          src={`${process.env.PUBLIC_URL}/assets/home_logo.png`}
+          alt="T.H.I.N.G"
+          style={{
+            display: "block",
+            width: "min(80%, 700px)",
+            height: "auto",
+            margin: "0 auto",
+            imageRendering: "pixelated",
+          }}
+        />
+      </h1>
+      <p className="title-subtitle">Testing Humanity Integration for Natural Goodness</p>
+      <a className="title-portal-link" href="#/assessments">Open assessment portal</a>
     </main>
   );
 }
