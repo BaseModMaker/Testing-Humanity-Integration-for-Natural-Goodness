@@ -37,7 +37,7 @@
   }
 }
 .title-subtitle,
-.title-portal-link {
+.portal-link {
   align-self: center;
   box-sizing: border-box;
   max-width: calc(100% - 2rem);
@@ -57,7 +57,7 @@
   line-height: 1.4;
 }
 
-.title-portal-link {
+.portal-link {
   display: inline-block;
   padding: 0.8rem 1.4rem;
   border: 2px solid #e5c17c;
@@ -69,16 +69,145 @@
   text-decoration: none;
 }
 
-.title-portal-link:hover {
+.portal-link:hover {
   background: #32634d;
 }
 
-.title-portal-link:active {
+.portal-link:active {
   transform: translateY(2px);
   box-shadow: 0 2px 0 #163a2d;
 }
 
-.title-portal-link:focus-visible {
+.portal-link:focus-visible {
   outline: 3px solid #163a2d;
   outline-offset: 5px;
+}
+
+.assessment-home {
+  position: relative;
+  box-sizing: border-box;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  text-align: center;
+}
+
+.passport-photo {
+  position: absolute;
+  top: 35%;
+  left: 30%;
+  transform: translate(-50%, -50%) rotate(6deg);
+  box-sizing: border-box;
+  width: clamp(5rem, min(35vw, 45dvh), 12rem);
+  aspect-ratio: 4 / 5;
+  display: grid;
+  place-items: center;
+  padding: 0.6rem;
+  border: 3px double #97733b;
+  border-radius: 0.3rem;
+  background: #fff3d7;
+  box-shadow: 0 2px 5px #293e341f;
+}
+
+.passport-photo::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0.8rem;
+  height: 0.8rem;
+  transform: translate(-50%, -50%);
+  border: 1px solid #825420;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff2bc, #d39a40 55%, #945e23);
+  box-shadow: 0 1px 2px #49301e55;
+  pointer-events: none;
+}
+
+.passport-photo img {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+}
+
+.passport-details {
+  position: absolute;
+  top: 70%;
+  left: 35%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  width: 22rem;
+  max-width: 48%;
+  margin: 0;
+  padding: clamp(0.5rem, 2vw, 1rem);
+  border: 3px double #97733b;
+  border-radius: 0.3rem;
+  background: #fff3d7;
+  color: #253d2e;
+  font: 700 clamp(0.8rem, 2.5vw, 1.1rem)/1.4 Georgia, serif;
+  text-align: left;
+}
+
+.passport-details > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+}
+
+.passport-details > div + div {
+  margin-top: 0.35rem;
+}
+
+.passport-details dt {
+  min-width: 0;
+}
+
+.passport-details dd {
+  flex: 1;
+  min-width: 0.75em;
+  margin: 0;
+  border-bottom: 1px solid currentColor;
+}
+
+.passport-radar {
+  position: absolute;
+  top: 46%;
+  left: 66%;
+  transform: translate(-50%, -50%);
+  width: min(42%, 25rem, 100dvh);
+  margin: 0;
+  color: #253d2e;
+  font: 700 clamp(0.85rem, 2vw, 1.25rem) Georgia, serif;
+}
+
+.passport-radar svg {
+  display: block;
+  width: 100%;
+  fill: currentColor;
+  font-size: 15px;
+}
+
+.radar-grid {
+  fill: none;
+  stroke: #967747;
+}
+
+.radar-score {
+  fill: #49885466;
+  stroke: #234d3c;
+  stroke-width: 2;
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  .passport-radar {
+    top: 49%;
+    left: 68%;
+    width: 60%;
+  }
 }
