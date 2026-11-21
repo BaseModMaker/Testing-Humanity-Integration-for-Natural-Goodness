@@ -38,20 +38,3 @@ export function GameHeader({ children, className = "", style = {} }) {
     </header>
   );
 }
-
-export function GameFooter({ children, className = "", style = {} }) {
-  return (
-    <footer
-      className={className}
-      style={{
-        ...shared,
-        minHeight: 84,
-        padding: "12px 24px max(12px, env(safe-area-inset-bottom))",
-        borderTop: `1px solid ${THING_COLORS.line}`,
-        ...style,
-      }}
-    >
-      {children}
-    </footer>
-  );
-}
