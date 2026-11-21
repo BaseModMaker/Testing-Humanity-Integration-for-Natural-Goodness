@@ -444,9 +444,8 @@ const DogPettingMiniGame = ({
           .dog-tail {
             position: absolute;
             z-index: 1;
-            left: 32%;
-            top: -20%;
-            width: 58%;
+            left: 15%;
+            width: 85%;
             height: auto;
             object-fit: contain;
             transform-origin: right center;
