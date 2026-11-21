@@ -63,7 +63,7 @@ const DrivingMiniGame = ({
 
   // Keep steering synchronized with the animation loop.
   const updateSteering = (value) => {
-    const next = clamp(value, -135, 135);
+    const next = clamp(value, -400, 400);
     steeringRef.current = next;
     setSteering(next);
   };
@@ -139,9 +139,9 @@ const DrivingMiniGame = ({
 
       if (nextProgress >= 1) {
         let choice = "both"
-        if (steeringRef.current < -30) {
+        if (steeringRef.current < -200) {
           choice = "left"
-        } else if (steeringRef.current > 30) {
+        } else if (steeringRef.current > 200) {
           choice = "right"
         }
 
@@ -212,7 +212,11 @@ const DrivingMiniGame = ({
           width: 150%;
           left: -25%;
 
-          transform: translateX(var(--view-shift));
+          transform:
+            translate(var(--view-shift), var(--scene-rise))
+            scale(var(--scene-zoom));
+
+          transform-origin: center center;
           will-change: transform;
 
           background-image: var(--scene-background);
@@ -601,6 +605,8 @@ const DrivingMiniGame = ({
           className="dg-scene"
           style={{
             "--view-shift": `${-steering * 0.65}px`,
+            "--scene-rise": `${-progress * 4}%`,
+            "--scene-zoom": 1 + progress * 0.12,
             "--scene-background": `url("${publicPath + backgroundSrc}")`,
           }}
         >
