@@ -25,17 +25,18 @@ export default function App() {
 
 const clamp = (value, min, max) =>
   Math.min(max, Math.max(min, value));
+const backgroundSrc = "/assets/street_background2.png";
 const interiorSrc = "/assets/car-interior.png";
 const wheelSrc = "/assets/steering-wheel2.png";
-const leftObject ="/assets/elder.png";
-const rightObject = "/assets/child.png";
+const leftObject = "/assets/elder.png";
+const rightObject = "/assets/cat.png";
 const leftObjectName = "grandma";
-const rightObjectName = "child";
+const rightObjectName = "cat";
 const publicPath = process.env.PUBLIC_URL;
 
 const DrivingMiniGame = ({
-  onChoose = () => {},
-  onContinue = () => {},
+  onChoose = () => { },
+  onContinue = () => { },
 
   duration = 6000,
 }) => {
@@ -128,10 +129,10 @@ const DrivingMiniGame = ({
 
       if (nextProgress >= 1) {
         let choice = "both"
-        if (steeringRef.current<-30){
+        if (steeringRef.current < -30) {
           choice = "left"
-        } else if (steeringRef.current>30){
-          choice="right"
+        } else if (steeringRef.current > 30) {
+          choice = "right"
         }
 
         setResult(choice);
@@ -153,36 +154,36 @@ const DrivingMiniGame = ({
   }, [running, duration]);
 
   // Reset and replay.
-/*  const restart = () => {
-    cancelAnimationFrame(animationFrame.current);
-
-    progressRef.current = 0;
-    steeringRef.current = 0;
-    lastAngle.current = null;
-    lastTime.current = null;
-
-    setProgress(0);
-    setSteering(0);
-    setResult(null);
-    setRunning(true);
-  };
-*/
+  /*  const restart = () => {
+      cancelAnimationFrame(animationFrame.current);
+  
+      progressRef.current = 0;
+      steeringRef.current = 0;
+      lastAngle.current = null;
+      lastTime.current = null;
+  
+      setProgress(0);
+      setSteering(0);
+      setResult(null);
+      setRunning(true);
+    };
+  */
   // Calculate the perspective animation of the objects.
   // Objects grow as they approach the car
-  const objectScale = 0.25 + progress * 1.75;
+  const objectScale = 0.01 + progress * 3;
 
   // Objects move down the windscreen
-  const objectY = 8 + progress * 55;
+  const objectY = 25 + progress * 30;
 
   // Distance between the objects increases over time
-  const objectSpread = 8 + progress * 32;
+  const objectSpread = 8 + progress * 15;
 
   // Calculate each object's horizontal position
   const leftPosition = 50 - objectSpread / 2;
   const rightPosition = 50 + objectSpread / 2;
 
   return (
-    <div className="driving-game">
+    <div className={`driving-game ${running ? "is-running" : "is-finished"}`}>
 
       <style>{`
         /* The game world outside the windshield */
@@ -190,32 +191,46 @@ const DrivingMiniGame = ({
           position: absolute;
           inset: 0;
           z-index: 1;
+          overflow: hidden;
+        }
+        .dg-scene {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 150%;
+          left: -25%;
+
           transform: translateX(var(--view-shift));
           will-change: transform;
+
+          background-image: var(--scene-background);
+          background-size: 100% 100%;
+          background-position: center;
+          background-repeat: no-repeat;
         }
 
         /* Car interior overlay */
         .dg-interior {
           position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
+          inset: -3px;
+          width: calc(100% + 6px);
+          height: calc(100% + 6px);
           object-fit: fill;
           z-index: 5;
           pointer-events: none;
           user-select: none;
         }
 
-        /* Actual steering wheel image */
         .dg-wheel-image {
           position: absolute;
-          width: 28%;
+
+          width: clamp(150px, 24vw, 320px);
           height: auto;
+          aspect-ratio: 1 / 1;
 
-          bottom: 3%;
-          left: 25%;
+          bottom: 4%;
+          left: 36%;
 
-          transform: translateX(-50%) rotate(0deg);
           transform-origin: center center;
 
           z-index: 8;
@@ -229,17 +244,20 @@ const DrivingMiniGame = ({
           cursor: grabbing;
         }
         .driving-game {
-          position: relative;
-          width: 100%;
-          height: clamp(460px, 70vh, 720px);
-          min-height: 460px;
+          position: fixed;
+          inset: 0;
+          width: 100vw;
+          height: 100vh;
+          height: 100dvh;
+          min-height: 0;
           overflow: hidden;
           background: #a6c7df;
-          border-radius: 12px;
+          border-radius: 0;
           user-select: none;
           font-family: Arial, sans-serif;
           color: white;
           isolation: isolate;
+          z-index: 9999;
         }
 
         .driving-game * {
@@ -500,6 +518,50 @@ const DrivingMiniGame = ({
           background: white;
           transition: width 0.05s linear;
         }
+                  
+          /* Subtle driving vibration */
+          @keyframes carShake {
+            0% {
+              transform: translate(0, 0) rotate(0deg);
+            }
+            25% {
+              transform: translate(1px, -1px) rotate(0.15deg);
+            }
+            50% {
+              transform: translate(0, 1px) rotate(0deg);
+            }
+            75% {
+              transform: translate(-1px, -1px) rotate(-0.15deg);
+            }
+            100% {
+              transform: translate(0, 0) rotate(0deg);
+            }
+          }
+
+          @keyframes wheelShake {
+            0% { translate: 0 0; }
+            25% { translate: 0 -1px; }
+            50% { translate: 0 1px; }
+            75% { translate: 0 -1px; }
+            100% { translate: 0 0; }
+          }
+
+        .driving-game.is-running .dg-interior {
+          animation: carShake 0.22s infinite ease-in-out;
+        }
+
+        .driving-game.is-running .dg-wheel-image {
+          animation: wheelShake 0.18s infinite ease-in-out;
+        }
+        .driving-game.is-finished .dg-scene {
+          animation: none;
+          transition: none;
+        }
+
+        .driving-game.is-finished .dg-target {
+          animation: none;
+          transition: none;
+        }
 
         @media (max-width: 500px) {
           .dg-car {
@@ -515,48 +577,53 @@ const DrivingMiniGame = ({
             bottom: 2%;
           }
 
+
           
         }
       `}</style>
 
 
       {/* Outside view: road, sky and approaching objects */}
-      <div
-        className="dg-world"
-        style={{
-          "--view-shift": `${-steering * 0.65}px`,
-        }}
-      >
-
-        {/* Left approaching image */}
+      <div className="dg-world">
         <div
-          className="dg-target"
+          className="dg-scene"
           style={{
-            left: `${leftPosition}%`,
-            top: `${objectY}%`,
-            transform: `translate(-50%, -50%) scale(${objectScale})`,
+            "--view-shift": `${-steering * 0.65}px`,
+            "--scene-background": `url("${publicPath + backgroundSrc}")`,
           }}
         >
-          <img src={publicPath + leftObject} alt="" />
-        </div>
+          {/* Background image is applied through CSS */}
 
-        {/* Right approaching image */}
-        <div
-          className="dg-target"
-          style={{
-            left: `${rightPosition}%`,
-            top: `${objectY}%`,
-            transform: `translate(-50%, -50%) scale(${objectScale})`,
-          }}
-        >
-          <img src={publicPath + rightObject} alt="" />
+          {/* Left approaching object */}
+          <div
+            className="dg-target"
+            style={{
+              left: `${leftPosition}%`,
+              top: `${objectY}%`,
+              transform: `translate(-50%, -50%) scale(${objectScale})`,
+            }}
+          >
+            <img src={publicPath + leftObject} alt="" />
+          </div>
+
+          {/* Right approaching object */}
+          <div
+            className="dg-target"
+            style={{
+              left: `${rightPosition}%`,
+              top: `${objectY}%`,
+              transform: `translate(-50%, -50%) scale(${objectScale})`,
+            }}
+          >
+            <img src={publicPath + rightObject} alt="" />
+          </div>
         </div>
       </div>
 
       {/* Transparent car interior overlay */}
       <img
         className="dg-interior"
-        src={publicPath+interiorSrc}
+        src={publicPath + interiorSrc}
         alt=""
         draggable="false"
       />
@@ -564,11 +631,11 @@ const DrivingMiniGame = ({
       {/* Steering wheel */}
       <img
         className="dg-wheel-image"
-        src={publicPath+wheelSrc}
+        src={publicPath + wheelSrc}
         alt="Steering wheel"
         draggable="false"
         style={{
-          transform: `rotate(${steering}deg)`,
+          transform: `translateX(-50%) rotate(${steering}deg)`,
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -604,11 +671,11 @@ const DrivingMiniGame = ({
         <div className="dg-overlay">
           <h2>
             You hit the {
-            result === "both"
-            ? leftObjectName+" and "+rightObjectName
-            : result === "left"
-            ? leftObjectName
-            : rightObjectName}!
+              result === "both"
+                ? leftObjectName + " and " + rightObjectName
+                : result === "left"
+                  ? leftObjectName
+                  : rightObjectName}!
           </h2>
 
           <button onClick={onContinue}>
