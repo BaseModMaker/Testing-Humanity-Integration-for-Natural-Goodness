@@ -5,8 +5,8 @@ import React, { useState, useRef, useMemo } from "react";
 const robotImage = `${process.env.PUBLIC_URL || ""}/assets/robot-face.png`;
 
 // Original image dimensions
-const WIDTH = 1312;
-const HEIGHT = 1199;
+const WIDTH = 1330;
+const HEIGHT = 1500;
 
 // LED drawing grid
 const LED = {
@@ -34,6 +34,8 @@ function onVisor(col, row) {
 
   const dx = (x - 656) / 445;
   const dy = (y - 784) / 295;
+  // const dx = (x - 656) / 445;
+  // const dy = (y - 584) / 255;
 
   return dx * dx + dy * dy < 0.92;
 }
