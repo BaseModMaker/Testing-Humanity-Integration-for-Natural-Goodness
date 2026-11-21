@@ -857,7 +857,7 @@ export default function RobotEmotionGame({
       <GameHeader>
         <div className="robot-header-content">
           <div className="robot-header-heading">
-            <span className="robot-test-badge">Test 1 / 2</span>
+            <span className="robot-test-badge">Test 2 / 4</span>
             <span className="robot-header-divider" aria-hidden="true" />
             <svg
               className="robot-title-icon"
@@ -1010,7 +1010,9 @@ export default function RobotEmotionGame({
                   className="robot-button"
                   onClick={clearDrawing}
                 >
-                  ↺
+                  <span style={{ fontSize: "30px", lineHeight: 1 }}>
+                    ↺
+                  </span>
                 </button>
               </div>
             </div>

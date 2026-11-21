@@ -851,7 +851,7 @@ export default function UmbrellaDilemma({
       <GameHeader>
         <div className="umbrella-header-content">
           <div className="umbrella-heading">
-            <span className="umbrella-test-badge">Test 2 / 2</span>
+            <span className="umbrella-test-badge">Test 1 / 4</span>
             <span className="umbrella-heading-divider" aria-hidden="true" />
             <h1 className="umbrella-title">
               <span className="umbrella-title-symbol" aria-hidden="true">☂</span>
