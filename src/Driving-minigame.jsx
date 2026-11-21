@@ -1,16 +1,42 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
+/* put this in App.js to test
+import DrivingMiniGame from "./Driving-minigame"
+
+export default function App() {
+  return (
+    <div>
+      <div style={{ width: "100%", maxWidth: "900px", margin: "auto" }}>
+        <DrivingMiniGame
+          onChoose={(choice) => {
+            console.log("Player chose:", choice);
+          }
+        }
+          onContinue={() => {
+            console.log("Continue");
+          }
+        }
+        />
+      </div>
+    </div>
+  );
+}*/
+
 const clamp = (value, min, max) =>
   Math.min(max, Math.max(min, value));
 const interiorSrc = "/assets/car-interior.png";
 const wheelSrc = "/assets/steering-wheel2.png";
 const leftObject ="/assets/elder.png";
 const rightObject = "/assets/child.png";
+const leftObjectName = "grandma";
+const rightObjectName = "child";
 const publicPath = process.env.PUBLIC_URL;
 
 const DrivingMiniGame = ({
   onChoose = () => {},
+  onContinue = () => {},
+
   duration = 6000,
 }) => {
   const [progress, setProgress] = useState(0);
@@ -101,8 +127,12 @@ const DrivingMiniGame = ({
       setProgress(nextProgress);
 
       if (nextProgress >= 1) {
-        const choice =
-          steeringRef.current < 0 ? "left" : "right";
+        let choice = "both"
+        if (steeringRef.current<-30){
+          choice = "left"
+        } else if (steeringRef.current>30){
+          choice="right"
+        }
 
         setResult(choice);
         setRunning(false);
@@ -123,7 +153,7 @@ const DrivingMiniGame = ({
   }, [running, duration]);
 
   // Reset and replay.
-  const restart = () => {
+/*  const restart = () => {
     cancelAnimationFrame(animationFrame.current);
 
     progressRef.current = 0;
@@ -136,7 +166,7 @@ const DrivingMiniGame = ({
     setResult(null);
     setRunning(true);
   };
-
+*/
   // Calculate the perspective animation of the objects.
   // Objects grow as they approach the car
   const objectScale = 0.25 + progress * 1.75;
@@ -573,15 +603,16 @@ const DrivingMiniGame = ({
       {result && (
         <div className="dg-overlay">
           <h2>
-            You hit the {result.toUpperCase()} object!
+            You hit the {
+            result === "both"
+            ? leftObjectName+" and "+rightObjectName
+            : result === "left"
+            ? leftObjectName
+            : rightObjectName}!
           </h2>
 
-          <p>
-            Steering angle: {Math.round(steering)}°
-          </p>
-
-          <button onClick={restart}>
-            Play Again
+          <button onClick={onContinue}>
+            Continue
           </button>
         </div>
       )}
