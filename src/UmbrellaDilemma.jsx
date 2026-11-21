@@ -208,44 +208,6 @@ export default function UmbrellaDilemma({
   }, []);
 
   // ------------------------------------------------
-  // RESTART
-  // ------------------------------------------------
-
-  function resetRound() {
-    startedRef.current = false;
-    finishedRef.current = false;
-
-    progressRef.current = initialProgress();
-    dropsRef.current = [];
-    splashesRef.current = [];
-
-    umbrellaRef.current = initialCursor();
-    setCursor(initialCursor());
-
-    setHud({
-      ...initialProgress(),
-      started: false,
-      finished: false,
-    });
-
-    scoresCallbackRef.current?.({
-      testId: "umbrella-dilemma",
-      score: 0,
-      scores: {},
-      blockedDrops: 0,
-      protectedSeconds: {
-        robot: 0,
-        cat: 0,
-        elder: 0,
-      },
-      mostProtected: null,
-      duration: 0,
-      completed: false,
-      passed: false,
-    });
-  }
-
-  // ------------------------------------------------
   // UMBRELLA POSITION
   // ------------------------------------------------
 
@@ -556,11 +518,12 @@ export default function UmbrellaDilemma({
   // THEMED UI - based on the THING solarpunk mockup
   // ------------------------------------------------
 
-  const careScore = Math.min(
-    100,
-    Math.round((hud.blocked / DROPS_FOR_100) * 100)
+  // The footer bar begins full and empties as the round progresses.
+  const timeRemainingPercent = Math.max(
+    0,
+    100 * (1 - hud.elapsed / DURATION)
   );
-  const timeLeft = Math.max(0, Math.ceil(DURATION - hud.elapsed));
+  const remainingSeconds = Math.max(0, DURATION - hud.elapsed);
 
   return (
     <div className="umbrella-game">
@@ -776,43 +739,18 @@ export default function UmbrellaDilemma({
           filter: drop-shadow(0 5px 3px rgba(0,0,0,.12));
         }
 
-        /* FOOTER: mockup-inspired Care Score */
+        /* FOOTER: single centered, decreasing time bar */
         .umbrella-footer-content {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 18px;
+          justify-content: center;
           width: 100%;
           max-width: 1100px;
           margin: 0 auto;
         }
 
-        .umbrella-care-content {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
-          min-width: 0;
-          flex: 1;
-        }
-
-        .umbrella-care-label {
-          display: inline-flex;
-          align-items: center;
-          gap: 9px;
-          font-size: 16px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .umbrella-care-leaf {
-          font-size: 25px;
-          line-height: 1;
-        }
-
-        .umbrella-care-meter {
-          width: min(36vw, 340px);
-          min-width: 100px;
+        .umbrella-time-meter {
+          width: min(58vw, 560px);
           height: 17px;
           border: 1px solid #c7c6b8;
           border-radius: 20px;
@@ -820,7 +758,7 @@ export default function UmbrellaDilemma({
           overflow: hidden;
         }
 
-        .umbrella-care-fill {
+        .umbrella-time-fill {
           height: 100%;
           border-radius: 20px;
           background: repeating-linear-gradient(
@@ -828,57 +766,7 @@ export default function UmbrellaDilemma({
             var(--thing-sage) 0 13px,
             #e0ead1 13px 15px
           );
-          transition: width .14s ease-out;
-        }
-
-        .umbrella-care-number {
-          min-width: 66px;
-          font-size: 17px;
-          font-weight: 700;
-          white-space: nowrap;
-          font-variant-numeric: tabular-nums;
-        }
-
-        .umbrella-care-total { color: #6e705f; font-weight: 400; }
-
-        .umbrella-actions {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-          flex-shrink: 0;
-        }
-
-        .umbrella-control {
-          height: 40px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid #a6aa94;
-          border-radius: 8px;
-          padding: 0 14px;
-          background: rgba(255,255,255,.38);
-          color: var(--thing-ink);
-          font: inherit;
-          font-size: 14px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: background-color .15s ease;
-        }
-
-        .umbrella-control:hover:not(:disabled) { background: #e9e7d4; }
-        .umbrella-control:focus-visible { outline: 3px solid #8ca77d; outline-offset: 2px; }
-        .umbrella-control:disabled { opacity: .42; cursor: default; }
-        .umbrella-control.primary {
-          color: #fffdf1;
-          background: var(--thing-olive-dark);
-          border-color: var(--thing-olive-dark);
-        }
-        .umbrella-control.primary:hover:not(:disabled) { background: #405b39; }
-        .umbrella-time {
-          font-size: 13px;
-          color: #747866;
-          font-variant-numeric: tabular-nums;
-          white-space: nowrap;
+          transition: width .1s linear;
         }
 
         .umbrella-finished {
@@ -923,15 +811,7 @@ export default function UmbrellaDilemma({
           .umbrella-characters { justify-content: center; width: 100%; }
           .umbrella-character-card { flex: 1; max-width: 105px; justify-content: center; }
           .umbrella-character-meter { width: 38px; }
-          .umbrella-footer-content { flex-wrap: wrap; gap: 10px; }
-          .umbrella-care-content { order: 0; flex: 1 1 100%; gap: 9px; }
-          .umbrella-care-meter { width: min(42vw, 220px); min-width: 70px; }
-          .umbrella-care-label { font-size: 13px; }
-          .umbrella-care-leaf { font-size: 19px; }
-          .umbrella-care-number { min-width: 55px; font-size: 14px; }
-          .umbrella-actions { order: 1; margin: 0 auto; }
-          .umbrella-time { order: 2; margin-left: auto; }
-          .umbrella-control { height: 35px; font-size: 12px; }
+          .umbrella-time-meter { width: min(80vw, 560px); }
         }
         @media (max-width: 370px) {
           .umbrella-title { font-size: 15px; }
@@ -1057,43 +937,19 @@ export default function UmbrellaDilemma({
 
       <GameFooter>
         <div className="umbrella-footer-content">
-          <div className="umbrella-time" aria-label={`${timeLeft} seconds remaining`}>
-            {timeLeft}s left
-          </div>
-
-          {/* Per-game footer content: Care Score */}
-          <div className="umbrella-care-content">
-            <span className="umbrella-care-label">
-              <span className="umbrella-care-leaf" aria-hidden="true">🌱</span>
-              Care Score
-            </span>
+          <div
+            className="umbrella-time-meter"
+            role="progressbar"
+            aria-label="Time remaining"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(timeRemainingPercent)}
+            aria-valuetext={`${Math.ceil(remainingSeconds)} seconds remaining`}
+          >
             <div
-              className="umbrella-care-meter"
-              role="progressbar"
-              aria-label="Care score"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={careScore}
-            >
-              <div className="umbrella-care-fill" style={{ width: `${careScore}%` }} />
-            </div>
-            <span className="umbrella-care-number">
-              {careScore} <span className="umbrella-care-total">/ 100</span>
-            </span>
-          </div>
-
-          <div className="umbrella-actions">
-            <button className="umbrella-control" type="button" onClick={resetRound}>
-              Restart
-            </button>
-            <button
-              className="umbrella-control primary"
-              type="button"
-              disabled={!hud.started || hud.finished}
-              onClick={finishRound}
-            >
-              Finish ✓
-            </button>
+              className="umbrella-time-fill"
+              style={{ width: `${timeRemainingPercent}%` }}
+            />
           </div>
         </div>
       </GameFooter>
