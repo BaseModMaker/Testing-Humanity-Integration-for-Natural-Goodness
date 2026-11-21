@@ -1,14 +1,14 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 
-const robotImage = "/assets/robot-face.png";
-const publicPath = process.env.PUBLIC_URL;
+// Image stored in public/assets/
+const robotImage = `${process.env.PUBLIC_URL || ""}/assets/robot-face.png`;
 
 // Original image dimensions
 const WIDTH = 1312;
 const HEIGHT = 1199;
 
-// LED grid positioned over the robot's visor
+// LED drawing grid
 const LED = {
   x: 278,
   y: 537,
@@ -18,12 +18,16 @@ const LED = {
 };
 
 const EMOTIONS = ["joy", "sadness", "surprise", "anger"];
-const PASS_SCORE = 65;
+const EMPTY_PIXELS = [];
 
 const key = (x, y) => `${x},${y}`;
 const unpack = (k) => k.split(",").map(Number);
 
-// Keep drawings inside the dark visor
+// --------------------------------------------------
+// DRAWING AREA
+// --------------------------------------------------
+
+// Limit drawing to the robot's dark visor
 function onVisor(col, row) {
   const x = LED.x + (col + 0.5) * LED.size;
   const y = LED.y + (row + 0.5) * LED.size;
@@ -34,7 +38,10 @@ function onVisor(col, row) {
   return dx * dx + dy * dy < 0.92;
 }
 
-// Reference shapes for emotion scoring
+// --------------------------------------------------
+// EMOTION REFERENCE SHAPES
+// --------------------------------------------------
+
 function makeTarget(emotion) {
   const points = [];
   const add = (x, y) => points.push(key(x, y));
@@ -54,10 +61,11 @@ function makeTarget(emotion) {
 
   if (emotion === "surprise") {
     for (let i = 0; i < 48; i++) {
-      const a = (i / 48) * Math.PI * 2;
+      const angle = (i / 48) * Math.PI * 2;
+
       add(
-        21 + Math.round(5 * Math.cos(a)),
-        20 + Math.round(5 * Math.sin(a))
+        21 + Math.round(5 * Math.cos(angle)),
+        20 + Math.round(5 * Math.sin(angle))
       );
     }
   }
@@ -75,13 +83,19 @@ const TARGETS = Object.fromEntries(
   EMOTIONS.map((emotion) => [emotion, makeTarget(emotion)])
 );
 
-// Forgiving geometric comparison, not AI recognition
+// --------------------------------------------------
+// LIVE SCORE CALCULATION
+// --------------------------------------------------
+
+// Returns a score between 0 and 100.
+// No minimum score is required.
 function calculateScore(drawing, emotion) {
-  if (drawing.length < 3) return 0;
+  if (drawing.length === 0) return 0;
 
   const drawn = drawing.map(unpack);
   const target = TARGETS[emotion];
 
+  // Calculate center of a group of pixels
   const center = (points) => [
     points.reduce((sum, p) => sum + p[0], 0) / points.length,
     points.reduce((sum, p) => sum + p[1], 0) / points.length,
@@ -90,57 +104,82 @@ function calculateScore(drawing, emotion) {
   const [dx, dy] = center(drawn);
   const [tx, ty] = center(target);
 
-  // Allow some variation in the drawing position
+  // Center the player's drawing on the reference
+  // to allow freedom in drawing position.
   const aligned = drawn.map(([x, y]) => [
     x - dx + tx,
     y - dy + ty,
   ]);
 
+  // Compare a point against the closest reference point
   const similarity = ([x, y], points) => {
     let distance = Infinity;
 
     for (const [px, py] of points) {
-      distance = Math.min(distance, Math.hypot(x - px, y - py));
+      distance = Math.min(
+        distance,
+        Math.hypot(x - px, y - py)
+      );
     }
 
     return Math.max(0, 1 - distance / 3.2);
   };
 
+  // How much of the target shape has been reproduced?
   const coverage =
-    target.reduce((sum, p) => sum + similarity(p, aligned), 0) /
-    target.length;
+    target.reduce(
+      (sum, point) => sum + similarity(point, aligned),
+      0
+    ) / target.length;
 
+  // How closely do the drawn pixels match the target?
   const precision =
-    aligned.reduce((sum, p) => sum + similarity(p, target), 0) /
-    aligned.length;
+    aligned.reduce(
+      (sum, point) => sum + similarity(point, target),
+      0
+    ) / aligned.length;
 
   return Math.round(
-    Math.max(0, Math.min(100, 100 * (
-      0.63 * coverage + 0.37 * precision
-    )))
+    Math.max(
+      0,
+      Math.min(
+        100,
+        100 * (0.63 * coverage + 0.37 * precision)
+      )
+    )
   );
 }
 
+// --------------------------------------------------
+// RESULTS FOR FUTURE PASSPORT COMPONENT
+// --------------------------------------------------
+
 function buildResult(scores) {
   const values = Object.values(scores);
+
   const completed = EMOTIONS.every(
     (emotion) => typeof scores[emotion] === "number"
   );
 
+  const average = values.length
+    ? Math.round(
+        values.reduce((a, b) => a + b, 0) / values.length
+      )
+    : 0;
+
   return {
     testId: "emotion-drawing",
     scores: { ...scores },
-    average: values.length
-      ? Math.round(values.reduce((a, b) => a + b, 0) / values.length)
-      : 0,
+    average,
     completed,
-    passed:
-      completed &&
-      EMOTIONS.every((emotion) => scores[emotion] >= PASS_SCORE),
+    passed: completed,
   };
 }
 
-// Icon-only emotion selection
+// --------------------------------------------------
+// EMOTION ICONS
+// --------------------------------------------------
+
 function EmotionIcon({ emotion }) {
   return (
     <svg
@@ -153,6 +192,7 @@ function EmotionIcon({ emotion }) {
       strokeLinecap="round"
     >
       <circle cx="24" cy="24" r="20" />
+
       {emotion === "anger" ? (
         <>
           <path d="M12 16 L20 21 M36 16 L28 21" />
@@ -161,12 +201,15 @@ function EmotionIcon({ emotion }) {
       ) : (
         <>
           <path d="M17 19 V21 M31 19 V21" />
+
           {emotion === "joy" && (
             <path d="M12 29 Q24 42 36 29" />
           )}
+
           {emotion === "sadness" && (
             <path d="M12 37 Q24 24 36 37" />
           )}
+
           {emotion === "surprise" && (
             <ellipse cx="24" cy="32" rx="5" ry="7" />
           )}
@@ -176,6 +219,10 @@ function EmotionIcon({ emotion }) {
   );
 }
 
+// --------------------------------------------------
+// MAIN COMPONENT
+// --------------------------------------------------
+
 export default function RobotEmotionGame({
   onScoresChange,
   onComplete,
@@ -184,21 +231,40 @@ export default function RobotEmotionGame({
   const [drawings, setDrawings] = useState({});
   const [scores, setScores] = useState({});
   const [tool, setTool] = useState("draw");
-  const [checkedScore, setCheckedScore] = useState(null);
 
   const painting = useRef(false);
   const lastPoint = useRef(null);
   const completedRef = useRef(false);
 
-  const pixels = drawings[emotion] || [];
-  const canNext = scores[emotion] >= PASS_SCORE;
+  const pixels = drawings[emotion] || EMPTY_PIXELS;
 
-  // Convert pointer position into a grid coordinate
+  // -----------------------------------------------
+  // LIVE SCORE
+  // -----------------------------------------------
+
+  // Recalculates automatically whenever pixels change.
+  // This updates the score bar while drawing.
+  const liveScore = useMemo(
+    () => calculateScore(pixels, emotion),
+    [pixels, emotion]
+  );
+
+  // Convert percentage into 10 LED bars.
+  const activeBars =
+    liveScore > 0 ? Math.ceil(liveScore / 10) : 0;
+
+  // -----------------------------------------------
+  // POINTER POSITION
+  // -----------------------------------------------
+
   function pointerToCell(event) {
     const rect = event.currentTarget.getBoundingClientRect();
 
-    const x = ((event.clientX - rect.left) / rect.width) * WIDTH;
-    const y = ((event.clientY - rect.top) / rect.height) * HEIGHT;
+    const x =
+      ((event.clientX - rect.left) / rect.width) * WIDTH;
+
+    const y =
+      ((event.clientY - rect.top) / rect.height) * HEIGHT;
 
     const col = Math.floor((x - LED.x) / LED.size);
     const row = Math.floor((y - LED.y) / LED.size);
@@ -216,18 +282,26 @@ export default function RobotEmotionGame({
     return [col, row];
   }
 
-  function invalidateScore() {
-    setCheckedScore(null);
+  // -----------------------------------------------
+  // INVALIDATE PREVIOUSLY SAVED SCORE
+  // -----------------------------------------------
 
+  function invalidateScore() {
     if (typeof scores[emotion] === "number") {
       const updated = { ...scores };
+
       delete updated[emotion];
 
       setScores(updated);
       completedRef.current = false;
+
       onScoresChange?.(buildResult(updated));
     }
   }
+
+  // -----------------------------------------------
+  // PAINT PIXELS
+  // -----------------------------------------------
 
   function paint(point) {
     if (!point) {
@@ -238,6 +312,7 @@ export default function RobotEmotionGame({
     const [x1, y1] = lastPoint.current || point;
     const [x2, y2] = point;
 
+    // Fill the gaps between pointer events
     const steps = Math.max(
       Math.abs(x2 - x1),
       Math.abs(y2 - y1),
@@ -247,20 +322,32 @@ export default function RobotEmotionGame({
     const touched = [];
 
     for (let i = 0; i <= steps; i++) {
-      const x = Math.round(x1 + ((x2 - x1) * i) / steps);
-      const y = Math.round(y1 + ((y2 - y1) * i) / steps);
+      const x = Math.round(
+        x1 + ((x2 - x1) * i) / steps
+      );
 
-      if (onVisor(x, y)) touched.push(key(x, y));
+      const y = Math.round(
+        y1 + ((y2 - y1) * i) / steps
+      );
+
+      if (onVisor(x, y)) {
+        touched.push(key(x, y));
+      }
     }
 
     lastPoint.current = point;
 
     setDrawings((previous) => {
-      const current = new Set(previous[emotion] || []);
+      const current = new Set(
+        previous[emotion] || []
+      );
 
       touched.forEach((cell) => {
-        if (tool === "erase") current.delete(cell);
-        else current.add(cell);
+        if (tool === "erase") {
+          current.delete(cell);
+        } else {
+          current.add(cell);
+        }
       });
 
       return {
@@ -268,22 +355,36 @@ export default function RobotEmotionGame({
         [emotion]: [...current],
       };
     });
-
-    setCheckedScore(null);
   }
 
+  // -----------------------------------------------
+  // POINTER EVENTS
+  // -----------------------------------------------
+
   function handlePointerDown(event) {
-    if (event.button !== undefined && event.button !== 0) return;
+    if (
+      event.button !== undefined &&
+      event.button !== 0
+    ) {
+      return;
+    }
 
     const point = pointerToCell(event);
+
     if (!point) return;
 
     event.preventDefault();
+
     painting.current = true;
     lastPoint.current = null;
 
-    event.currentTarget.setPointerCapture(event.pointerId);
+    event.currentTarget.setPointerCapture(
+      event.pointerId
+    );
+
+    // Editing a completed emotion invalidates its score
     invalidateScore();
+
     paint(point);
   }
 
@@ -298,10 +399,20 @@ export default function RobotEmotionGame({
     painting.current = false;
     lastPoint.current = null;
 
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (
+      event.currentTarget.hasPointerCapture?.(
+        event.pointerId
+      )
+    ) {
+      event.currentTarget.releasePointerCapture(
+        event.pointerId
+      );
     }
   }
+
+  // -----------------------------------------------
+  // CLEAR DRAWING
+  // -----------------------------------------------
 
   function clearDrawing() {
     setDrawings((previous) => ({
@@ -312,36 +423,56 @@ export default function RobotEmotionGame({
     invalidateScore();
   }
 
-  function checkDrawing() {
-    const score = calculateScore(pixels, emotion);
-
-    const updated = {
-      ...scores,
-      [emotion]: score,
-    };
-
-    setScores(updated);
-    setCheckedScore(score);
-
-    const result = buildResult(updated);
-    onScoresChange?.(result);
-
-    if (result.passed && !completedRef.current) {
-      completedRef.current = true;
-      onComplete?.(result);
-    }
-  }
+  // -----------------------------------------------
+  // SELECT AN EMOTION
+  // -----------------------------------------------
 
   function selectEmotion(next) {
     setEmotion(next);
-    setCheckedScore(null);
     setTool("draw");
   }
 
-  function nextEmotion() {
-    const index = EMOTIONS.indexOf(emotion);
-    selectEmotion(EMOTIONS[(index + 1) % EMOTIONS.length]);
+  // -----------------------------------------------
+  // SAVE SCORE AND AUTOMATICALLY ADVANCE
+  // -----------------------------------------------
+
+  function checkDrawing() {
+    // A drawing is required, but no score minimum.
+    if (pixels.length === 0) return;
+
+    // Save the current live score
+    const updated = {
+      ...scores,
+      [emotion]: liveScore,
+    };
+
+    setScores(updated);
+
+    const result = buildResult(updated);
+
+    // Send latest scores to parent
+    onScoresChange?.(result);
+
+    // Find the next emotion not yet completed
+    const next = EMOTIONS.find(
+      (e) => typeof updated[e] !== "number"
+    );
+
+    if (next) {
+      // Automatically advance
+      selectEmotion(next);
+    } else {
+      // All emotions have been drawn
+      if (!completedRef.current) {
+        completedRef.current = true;
+        onComplete?.(result);
+      }
+    }
   }
+
+  // -----------------------------------------------
+  // RENDER
+  // -----------------------------------------------
 
   return (
     <div className="robot-game">
@@ -414,11 +545,13 @@ export default function RobotEmotionGame({
           background: #142c2a;
           cursor: pointer;
           font-size: 25px;
-          transition: background 0.15s, border-color 0.15s;
+          transition:
+            background 0.15s,
+            border-color 0.15s;
           position: relative;
         }
 
-        .robot-button:hover:not(:disabled) {
+        .robot-button:hover {
           background: #244b45;
         }
 
@@ -437,6 +570,7 @@ export default function RobotEmotionGame({
           height: 7px;
           border-radius: 50%;
           background: #afffc2;
+          box-shadow: 0 0 6px #afffc2;
         }
 
         .robot-button.confirm {
@@ -444,10 +578,11 @@ export default function RobotEmotionGame({
           color: #123e37;
         }
 
-        .robot-button:disabled {
-          opacity: 0.3;
-          cursor: default;
+        .robot-button.confirm:hover {
+          background: #c8ffeb;
         }
+
+        /* LIVE SCORE BAR */
 
         .robot-score {
           display: flex;
@@ -461,16 +596,14 @@ export default function RobotEmotionGame({
           height: 7px;
           border-radius: 2px;
           background: #314640;
+          transition:
+            background 0.12s ease,
+            box-shadow 0.12s ease;
         }
 
         .robot-score span.lit {
           background: #9ef9db;
           box-shadow: 0 0 8px #9ef9db;
-        }
-
-        .robot-score span.low {
-          background: #f2ad7f;
-          box-shadow: 0 0 8px #f2ad7f;
         }
 
         @media (max-width: 500px) {
@@ -486,7 +619,8 @@ export default function RobotEmotionGame({
         }
       `}</style>
 
-      {/* Select an emotion */}
+      {/* EMOTION SELECTION */}
+
       <div
         className="robot-controls robot-emotions"
         role="group"
@@ -501,7 +635,7 @@ export default function RobotEmotionGame({
             className={[
               "robot-button",
               emotion === e ? "active" : "",
-              scores[e] >= PASS_SCORE ? "done" : "",
+              typeof scores[e] === "number" ? "done" : "",
             ].join(" ")}
             onClick={() => selectEmotion(e)}
           >
@@ -510,10 +644,11 @@ export default function RobotEmotionGame({
         ))}
       </div>
 
-      {/* Robot image + interactive LED drawing */}
+      {/* ROBOT IMAGE + DRAWABLE LED LAYER */}
+
       <div className="robot-stage">
         <img
-          src={publicPath + robotImage}
+          src={robotImage}
           alt="Pixel-art robot"
           draggable={false}
         />
@@ -527,6 +662,10 @@ export default function RobotEmotionGame({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
+          onLostPointerCapture={() => {
+            painting.current = false;
+            lastPoint.current = null;
+          }}
         >
           <defs>
             <filter
@@ -536,7 +675,11 @@ export default function RobotEmotionGame({
               width="300%"
               height="300%"
             >
-              <feGaussianBlur stdDeviation="6" result="blur" />
+              <feGaussianBlur
+                stdDeviation="6"
+                result="blur"
+              />
+
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
@@ -564,7 +707,8 @@ export default function RobotEmotionGame({
         </svg>
       </div>
 
-      {/* Drawing controls */}
+      {/* DRAWING CONTROLS */}
+
       <div
         className="robot-controls robot-tools"
         role="toolbar"
@@ -573,7 +717,10 @@ export default function RobotEmotionGame({
         <button
           type="button"
           aria-label="Pencil"
-          className={`robot-button ${tool === "draw" ? "active" : ""}`}
+          aria-pressed={tool === "draw"}
+          className={`robot-button ${
+            tool === "draw" ? "active" : ""
+          }`}
           onClick={() => setTool("draw")}
         >
           ✎
@@ -582,7 +729,10 @@ export default function RobotEmotionGame({
         <button
           type="button"
           aria-label="Eraser"
-          className={`robot-button ${tool === "erase" ? "active" : ""}`}
+          aria-pressed={tool === "erase"}
+          className={`robot-button ${
+            tool === "erase" ? "active" : ""
+          }`}
           onClick={() => setTool("erase")}
         >
           ⌫
@@ -590,7 +740,7 @@ export default function RobotEmotionGame({
 
         <button
           type="button"
-          aria-label="Clear"
+          aria-label="Clear drawing"
           className="robot-button"
           onClick={clearDrawing}
         >
@@ -599,37 +749,28 @@ export default function RobotEmotionGame({
 
         <button
           type="button"
-          aria-label="Check drawing"
+          aria-label="Save score and continue"
           className="robot-button confirm"
           onClick={checkDrawing}
         >
           ✓
         </button>
-
-        <button
-          type="button"
-          aria-label="Next emotion"
-          className="robot-button"
-          disabled={!canNext}
-          onClick={nextEmotion}
-        >
-          →
-        </button>
       </div>
 
-      {/* Score feedback without text */}
-      <div className="robot-score" aria-label="Drawing score">
+      {/* LIVE SCORE BAR */}
+
+      <div
+        className="robot-score"
+        role="progressbar"
+        aria-label={`${emotion} drawing score`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={liveScore}
+      >
         {Array.from({ length: 10 }, (_, i) => (
           <span
             key={i}
-            className={
-              checkedScore !== null &&
-              i < Math.round(checkedScore / 10)
-                ? checkedScore >= PASS_SCORE
-                  ? "lit"
-                  : "lit low"
-                : ""
-            }
+            className={i < activeBars ? "lit" : ""}
           />
         ))}
       </div>
