@@ -99,6 +99,19 @@
   text-align: center;
 }
 
+.assessment-outcome {
+  align-self: center;
+  max-width: min(36rem, calc(100% - 2rem));
+  box-sizing: border-box;
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+  background: #fff3d7;
+  color: #234d3c;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .passport-photo {
   position: absolute;
   top: 35%;

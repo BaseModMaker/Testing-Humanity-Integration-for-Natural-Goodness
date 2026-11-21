@@ -100,7 +100,7 @@ function TitleScreen() {
           />
         </h1>
         <p className="title-subtitle">Testing Humanity Integration for Natural Goodness</p>
-        <a className="title-portal-link" href="#/assessments">Open assessment portal</a>
+        <a className="portal-link" href="#/assessments">Open assessment portal</a>
       </div>
     </main>
   );
@@ -113,6 +113,18 @@ const assessmentFields = [
   "Cooperation",
   "Adaptability",
 ];
+
+const minimumStatistic = 30;
+const minimumAverage = 60;
+
+export function getAssessmentOutcome(scores) {
+  const values = assessmentFields.map((field) => scores[field] ?? 0);
+  const average = values.reduce((total, score) => total + score, 0) / values.length;
+  return {
+    average,
+    passed: average >= minimumAverage && values.every((score) => score >= minimumStatistic),
+  };
+}
 
 function radarPoint(index, radius) {
   const angle = index * 2 * Math.PI / assessmentFields.length - Math.PI / 2;
@@ -151,6 +163,7 @@ function AssessmentRadar({ scores }) {
           const [scoreX, scoreY] = radarPoint(index, (value ?? 0) * 0.7);
           return (
             <g key={field}>
+              {field === "Ecology" && <title>Cat shelter points plus 80 for sparing the cat while driving, capped at 100</title>}
               <line className="radar-grid" x1="175" y1="123" x2={x} y2={y} />
               {value != null && <circle className="radar-score" cx={scoreX} cy={scoreY} r="4" />}
               <text x={labelX} y={labelY - 4} textAnchor={index === 0 ? "middle" : index < 3 ? "start" : "end"}>
@@ -172,24 +185,8 @@ const passportFields = [
   ["productionYear", "Prod. Year", ["2024", "2027", "2028"]],
 ];
 
-function MainScreen({ scores }) {
-  const [passport, setPassport] = useState(() => {
-    try {
-      return JSON.parse(window.localStorage.getItem("robot-passport")) ?? {};
-    } catch {
-      return {};
-    }
-  });
-
-  function updatePassport(field, value) {
-    const updatedPassport = { ...passport, [field]: value };
-    setPassport(updatedPassport);
-    try {
-      window.localStorage.setItem("robot-passport", JSON.stringify(updatedPassport));
-    } catch {
-      // The fields remain editable when browser storage is unavailable.
-    }
-  }
+function MainScreen({ scores, passport, updatePassport, completed, startAssessment }) {
+  const outcome = completed ? getAssessmentOutcome(scores) : null;
 
   return (
     <main
@@ -216,9 +213,6 @@ function MainScreen({ scores }) {
                 onChange={(event) => updatePassport(field, event.target.value)}
               >
                 <option value="">—</option>
-                {passport[field] && !options.includes(passport[field]) && (
-                  <option value={passport[field]}>{passport[field]}</option>
-                )}
                 {options.map((option) => (
                   <option key={option} value={option}>{option}</option>
                 ))}
@@ -228,7 +222,13 @@ function MainScreen({ scores }) {
         ))}
       </dl>
       <AssessmentRadar scores={scores} />
-      <a className="portal-link" href="#/assessments/umbrella">
+      {outcome && (
+        <p className="assessment-outcome" role="status">
+          {outcome.passed ? "Success! You passed the assessment." : "You did not pass the assessment."}
+          {" "}Average {outcome.average.toFixed(1)}/100. Passing requires at least {minimumStatistic} in every statistic and an average of {minimumAverage} or higher.
+        </p>
+      )}
+      <a className="portal-link" href="#/assessments/umbrella" onClick={startAssessment}>
         Start assessment
       </a>
     </main>
@@ -238,13 +238,20 @@ function MainScreen({ scores }) {
 
 export default function App() {
   const [route, setRoute] = useState(() => window.location.hash);
-  const [scores, setScores] = useState(() => {
-    try {
-      return JSON.parse(window.localStorage.getItem("robot-assessment-scores")) ?? {};
-    } catch {
-      return {};
-    }
-  });
+  const [scores, setScores] = useState({});
+  const [umbrellaScores, setUmbrellaScores] = useState(null);
+  const [completed, setCompleted] = useState(false);
+  const [passport, setPassport] = useState({});
+
+  function updatePassport(field, value) {
+    setPassport((previous) => ({ ...previous, [field]: value }));
+  }
+
+  function startAssessment() {
+    setScores({});
+    setUmbrellaScores(null);
+    setCompleted(false);
+  }
 
   function finishGame(nextRoute, results) {
     const updatedScores = Object.fromEntries(
@@ -258,14 +265,6 @@ export default function App() {
   }
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem("robot-assessment-scores", JSON.stringify(scores));
-    } catch {
-      // Scores remain available in memory when browser storage is unavailable.
-    }
-  }, [scores]);
-
-  useEffect(() => {
     function updateRoute() {
       setRoute(window.location.hash);
     }
@@ -276,15 +275,26 @@ export default function App() {
 
   switch (route) {
     case "#/assessments":
-      return <MainScreen scores={scores} />;
+      return (
+        <MainScreen
+          scores={scores}
+          passport={passport}
+          updatePassport={updatePassport}
+          completed={completed}
+          startAssessment={startAssessment}
+        />
+      );
 
     case "#/assessments/umbrella":
       return (
         <main>
           <a href="#/assessments">Back to assessments</a>
           <UmbrellaDilemma onComplete={(result) => {
+            setUmbrellaScores(result.scores);
             finishGame("#/assessments/emotion", {
               Preservation: result.scores.rainProtection,
+              Empathy: result.scores.empathy,
+              Ecology: result.scores.ecology,
             });
           }} />
         </main>
@@ -292,19 +302,20 @@ export default function App() {
 
     case "#/assessments/emotion":
       return <RobotEmotionGame onComplete={({ average }) => {
-        finishGame("#/assessments/driving", { Empathy: average });
+        finishGame("#/assessments/driving", { Empathy: average + (umbrellaScores?.empathy ?? 0) });
       }} />;
 
     case "#/assessments/driving":
-      return <DrivingMiniGame onContinue={(choice) => {
+      return <DrivingMiniGame onContinue={(_, drivingScores) => {
         finishGame("#/assessments/dog-petting", {
-          Ecology: choice === "left" ? 100 : 0,
-          Adaptability: choice === "both" ? 0 : 100,
+          ...drivingScores,
+          Ecology: (umbrellaScores?.ecology ?? 0) + drivingScores.Ecology,
         });
       }} />;
 
     case "#/assessments/dog-petting":
       return <DogPettingMiniGame onContinue={(score) => {
+        setCompleted(true);
         finishGame("#/assessments", { Cooperation: score });
       }} />;
 

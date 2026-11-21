@@ -30,13 +30,14 @@ const ASSETS = {
 
 const WIDTH = 900;
 const HEIGHT = 540;
-const DURATION = 20;
-const DROPS_FOR_100 = 150;
+const DURATION = 12;
+const CAT_ECOLOGY_POINTS = 80;
 const RAIN_PER_SECOND = 80;
 
 const CHARACTERS = [
   {
     id: "robot",
+    payoff: { preservation: 50, empathy: 0 },
     x: 190,
     y: 350,
     width: 118,
@@ -50,6 +51,7 @@ const CHARACTERS = [
   },
   {
     id: "cat",
+    payoff: { preservation: 25, empathy: 25 },
     x: 450,
     y: 390,
     width: 105,
@@ -63,6 +65,7 @@ const CHARACTERS = [
   },
   {
     id: "elder",
+    payoff: { preservation: 40, empathy: 10 },
     x: 705,
     y: 310,
     width: 112,
@@ -103,14 +106,17 @@ const clamp = (value, min, max) =>
 // SCORING
 // --------------------------------------------------
 
-function buildResult(progress) {
+export function buildUmbrellaResult(progress) {
   const protectedSeconds = {};
+  let preservation = 0;
+  let empathy = 0;
 
   for (const character of CHARACTERS) {
-    protectedSeconds[character.id] =
-      Math.round(
-        progress.shelter[character.id] * 10
-      ) / 10;
+    const seconds = progress.shelter[character.id];
+    protectedSeconds[character.id] = Math.round(seconds * 10) / 10;
+    const share = clamp(seconds / DURATION, 0, 1);
+    preservation += share * character.payoff.preservation;
+    empathy += share * character.payoff.empathy;
   }
 
   const mostProtected = CHARACTERS.reduce(
@@ -122,18 +128,15 @@ function buildResult(progress) {
     CHARACTERS[0]
   );
 
-  const score = Math.min(
-    100,
-    Math.round(
-      (progress.blocked / DROPS_FOR_100) * 100
-    )
-  );
+  const score = Math.round(preservation);
 
   return {
     testId: "umbrella-dilemma",
     score,
     scores: {
       rainProtection: score,
+      empathy: Math.round(empathy),
+      ecology: Math.round(CAT_ECOLOGY_POINTS * clamp(progress.shelter.cat / DURATION, 0, 1)),
     },
     blockedDrops: progress.blocked,
     protectedSeconds,
@@ -195,7 +198,7 @@ export default function UmbrellaDilemma({
     finishedRef.current = true;
 
     const progress = progressRef.current;
-    const result = buildResult(progress);
+    const result = buildUmbrellaResult(progress);
 
     setHud({
       elapsed: progress.elapsed,
@@ -454,10 +457,8 @@ export default function UmbrellaDilemma({
       if (active) {
         const progress = progressRef.current;
 
-        progress.elapsed = Math.min(
-          DURATION,
-          progress.elapsed + dt
-        );
+        const roundTime = Math.min(dt, DURATION - progress.elapsed);
+        progress.elapsed += roundTime;
 
         for (const character of CHARACTERS) {
           // Umbrella must be above the character
@@ -466,16 +467,14 @@ export default function UmbrellaDilemma({
               umbrella.x - character.x
             ) < 88;
 
-          const verticallyAligned =
-            umbrella.y < character.y + 15 &&
-            umbrella.y > character.y - 110;
+          const aboveCharacter = umbrella.y < character.y + 15;
 
           if (
             umbrella.visible &&
             horizontallyAligned &&
-            verticallyAligned
+            aboveCharacter
           ) {
-            progress.shelter[character.id] += dt;
+            progress.shelter[character.id] += roundTime;
           }
         }
 
@@ -856,11 +855,12 @@ export default function UmbrellaDilemma({
             {CHARACTERS.map((character) => {
               const sheltered = hud.shelter[character.id] || 0;
               const percent = Math.min(100, (sheltered / DURATION) * 100);
+              const ecologyPayoff = character.id === "cat" ? `, ${CAT_ECOLOGY_POINTS} Ecology` : "";
               return (
                 <div
                   className="umbrella-character-card"
                   key={character.id}
-                  title={`${character.id}: ${sheltered.toFixed(1)} seconds sheltered`}
+                  title={`${character.id}: ${sheltered.toFixed(1)} seconds sheltered. Full round: ${character.payoff.preservation} Preservation, ${character.payoff.empathy} Empathy${ecologyPayoff}.`}
                 >
                   <img src={ASSETS[character.id]} alt={character.id} draggable={false} />
                   <div

@@ -34,17 +34,26 @@ const leftObjectName = "grandma";
 const rightObjectName = "cat";
 const publicPath = process.env.PUBLIC_URL;
 const ignoreChoice = () => {};
+const STARTING_APPROACH = 0.5;
+
+export function getDrivingScores(collision) {
+  return {
+    Ecology: collision === "left" ? 80 : 0,
+    Adaptability: collision === "both" ? 0 : 50,
+  };
+}
 
 const DrivingMiniGame = ({
   onChoose = ignoreChoice,
   onContinue = () => { },
 
-  duration = 6000,
+  duration = 4000,
 }) => {
   const [progress, setProgress] = useState(0);
   const [steering, setSteering] = useState(0);
   const [result, setResult] = useState(null);
   const [running, setRunning] = useState(true);
+  const scores = result && getDrivingScores(result);
 
   const progressRef = useRef(0);
   const steeringRef = useRef(0);
@@ -169,15 +178,17 @@ const DrivingMiniGame = ({
       setRunning(true);
     };
   */
-  // Calculate the perspective animation of the objects.
+  // Start the hazards closer so they travel less distance before impact.
+  const approach = STARTING_APPROACH + (1 - STARTING_APPROACH) * progress;
+
   // Objects grow as they approach the car
-  const objectScale = 0.01 + progress * 3;
+  const objectScale = 0.01 + approach * 3;
 
   // Objects move down the windscreen
-  const objectY = 25 + progress * 30;
+  const objectY = 25 + approach * 30;
 
   // Distance between the objects increases over time
-  const objectSpread = 8 + progress * 15;
+  const objectSpread = 8 + approach * 15;
 
   // Calculate each object's horizontal position
   const leftPosition = 50 - objectSpread / 2;
@@ -679,7 +690,10 @@ const DrivingMiniGame = ({
                   : rightObjectName}!
           </h2>
 
-          <button onClick={() => onContinue(result)}>
+          <p>
+            +{scores.Ecology} Ecology points · Adaptability {scores.Adaptability}/100
+          </p>
+          <button onClick={() => onContinue(result, scores)}>
             Continue
           </button>
         </div>

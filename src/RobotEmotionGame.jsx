@@ -91,7 +91,7 @@ const TARGETS = Object.fromEntries(
 
 // Returns a score between 0 and 100.
 // No minimum score is required.
-function calculateScore(drawing, emotion) {
+export function calculateScore(drawing, emotion) {
   if (drawing.length === 0) return 0;
 
   const drawn = drawing.map(unpack);
@@ -141,15 +141,8 @@ function calculateScore(drawing, emotion) {
       0
     ) / aligned.length;
 
-  return Math.round(
-    Math.max(
-      0,
-      Math.min(
-        100,
-        100 * (0.63 * coverage + 0.37 * precision)
-      )
-    )
-  );
+  const total = coverage + precision;
+  return total === 0 ? 0 : Math.round(100 * (2 * coverage * precision) / total);
 }
 
 // --------------------------------------------------
