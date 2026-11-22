@@ -11,6 +11,21 @@ jest.mock('./RobotEmotionGame', () => ({ onComplete }) => (
   <button onClick={() => onComplete({ average: 82 })}>Finish emotions</button>
 ));
 
+test('prefills the passport with editable defaults', () => {
+  window.location.hash = '#/assessments';
+  render(<App />);
+
+  expect(screen.getByText('Passport validation')).toBeInTheDocument();
+  expect(screen.queryByText(/awaiting assessment/i)).toBeNull();
+  const model = screen.getByLabelText(/model/i);
+  expect(model).toHaveValue('BeepBoop-VPro-Max');
+  expect(screen.getByLabelText(/serial no/i)).toHaveValue('404');
+  expect(screen.getByLabelText(/company/i)).toHaveValue('Robot Inc.');
+  expect(screen.getByLabelText(/prod. year/i)).toHaveValue('2027');
+  fireEvent.change(model, { target: { value: '' } });
+  expect(model).toHaveValue('');
+});
+
 test('runs the games in order and keeps passport data in memory', async () => {
   window.localStorage.clear();
   window.location.hash = '#/assessments';
@@ -23,7 +38,8 @@ test('runs the games in order and keeps passport data in memory', async () => {
 
   try {
     const { unmount } = render(<App />);
-    expect(screen.getByText('Awaiting assessment')).toBeInTheDocument();
+    expect(screen.getByText('Passport validation')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).toBeNull();
     fireEvent.change(screen.getByRole('textbox', { name: /model/i }), { target: { value: 'Custom robot' } });
     const start = screen.getByRole('link', { name: 'Start assessment' });
     fireEvent.click(start);
@@ -75,7 +91,7 @@ test('runs the games in order and keeps passport data in memory', async () => {
     unmount();
     render(<App />);
     expect(screen.queryByRole('status')).toBeNull();
-    expect(screen.getByLabelText(/model/i)).toHaveValue('');
+    expect(screen.getByLabelText(/model/i)).toHaveValue('BeepBoop-VPro-Max');
     expect(screen.getByRole('img', { name: /Preservation: not assessed/ })).toBeInTheDocument();
   } finally {
     requestFrame.mockRestore();

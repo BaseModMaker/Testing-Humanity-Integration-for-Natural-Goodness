@@ -138,6 +138,8 @@ function radarPoint(index, radius) {
 function AssessmentRadar({ scores }) {
   const values = assessmentFields.map((field) => scores[field]);
   const hasAllScores = values.every((value) => typeof value === "number");
+  const radiusPerPoint = 0.90;
+  const outerRadius = 100 * radiusPerPoint;
 
   return (
     <figure className="passport-radar">
@@ -151,19 +153,19 @@ function AssessmentRadar({ scores }) {
           <polygon
             key={level}
             className="radar-grid"
-            points={assessmentFields.map((_, index) => radarPoint(index, level * 0.7).join(",")).join(" ")}
+            points={assessmentFields.map((_, index) => radarPoint(index, level * radiusPerPoint).join(",")).join(" ")}
           />
         ))}
         {hasAllScores && (
           <polygon className="radar-score" points={values.map((value, index) => (
-            radarPoint(index, value * 0.7).join(",")
+            radarPoint(index, value * radiusPerPoint).join(",")
           )).join(" ")} />
         )}
         {assessmentFields.map((field, index) => {
-          const [x, y] = radarPoint(index, 70);
-          const [labelX, labelY] = radarPoint(index, 81);
+          const [x, y] = radarPoint(index, outerRadius);
+          const [labelX, labelY] = radarPoint(index, outerRadius + 11);
           const value = values[index];
-          const [scoreX, scoreY] = radarPoint(index, (value ?? 0) * 0.7);
+          const [scoreX, scoreY] = radarPoint(index, (value ?? 0) * radiusPerPoint);
           return (
             <g key={field}>
               {field === "Ecology" && <title>Cat shelter points plus 80 for sparing the cat while driving, capped at 100</title>}
@@ -171,7 +173,7 @@ function AssessmentRadar({ scores }) {
               {value != null && <circle className="radar-score" cx={scoreX} cy={scoreY} r="4" />}
               <text x={labelX} y={labelY - 4} textAnchor={index === 0 ? "middle" : index < 3 ? "start" : "end"}>
                 <tspan x={labelX}>{field}</tspan>
-                <tspan x={labelX} dy="16">{value ?? "—"}</tspan>
+                {value != null && <tspan x={labelX} dy="16">{value}</tspan>}
               </text>
             </g>
           );
@@ -236,7 +238,7 @@ function MainScreen({ scores, passport, updatePassport, completed, startAssessme
       <AssessmentRadar scores={scores} />
       <div className="passport-result">
         <p className="passport-result-label">Passport validation</p>
-        {outcome ? (
+        {outcome && (
           <div
             className="assessment-outcome"
             role="status"
@@ -247,7 +249,7 @@ function MainScreen({ scores, passport, updatePassport, completed, startAssessme
             </strong>
             <span>Average {outcome.average.toFixed(1)}/100</span>
           </div>
-        ) : <span className="passport-pending">Awaiting assessment</span>}
+        )}
       </div>
         </section>
       </div>
@@ -264,7 +266,12 @@ export default function App() {
   const [scores, setScores] = useState({});
   const [umbrellaScores, setUmbrellaScores] = useState(null);
   const [completed, setCompleted] = useState(false);
-  const [passport, setPassport] = useState({});
+  const [passport, setPassport] = useState({
+    model: "BeepBoop-VPro-Max",
+    serialNumber: "404",
+    parentCompany: "Robot Inc.",
+    productionYear: "2027",
+  });
 
   function updatePassport(field, value) {
     setPassport((previous) => ({ ...previous, [field]: value }));

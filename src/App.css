@@ -193,11 +193,6 @@
   text-transform: uppercase;
 }
 
-.passport-pending {
-  align-self: start;
-  font-style: italic;
-}
-
 .assessment-outcome {
   display: grid;
   justify-items: center;
