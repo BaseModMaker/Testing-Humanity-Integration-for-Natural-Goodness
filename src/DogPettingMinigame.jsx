@@ -8,7 +8,7 @@ const dogLoveSrc = "/assets/dog_tongue.png";
 const dogFrameSrc = "/assets/dog_frame.png";
 const dogAngrySrc = "/assets/DogLockIn.png"
 const publicPath = process.env.PUBLIC_URL || "";
-const backgroundSrc = "/assets/sunny-background.png";
+const backgroundSrc = "/assets/courtyard_background.png";
 const GAME_DURATION = 10000;
 const tailImages = [
     "/assets/dog_tail1.png",
