@@ -1,0 +1,515 @@
+{
+  "source": "thing_a_solarpunk_humanity_journey.png",
+  "source_size": [
+    941,
+    1672
+  ],
+  "notes": [
+    "Sprites are cut directly from the approved flattened mockup.",
+    "Exact backgrounds retain the full design including text/characters.",
+    "Clean backgrounds have occluded regions digitally reconstructed and are approximate.",
+    "Sprite positions give x,y offsets relative to the listed section."
+  ],
+  "sections": {
+    "01_home": {
+      "source_box": [
+        0,
+        53,
+        941,
+        428
+      ],
+      "size": [
+        941,
+        375
+      ]
+    },
+    "02_emotion": {
+      "source_box": [
+        0,
+        438,
+        941,
+        803
+      ],
+      "size": [
+        941,
+        365
+      ]
+    },
+    "03_umbrella": {
+      "source_box": [
+        0,
+        811,
+        941,
+        1243
+      ],
+      "size": [
+        941,
+        432
+      ]
+    },
+    "04_passport": {
+      "source_box": [
+        0,
+        1252,
+        941,
+        1672
+      ],
+      "size": [
+        941,
+        420
+      ]
+    }
+  },
+  "sprites": {
+    "home_robot": {
+      "path": "sprites/characters/home_robot.png",
+      "screen": "01_home",
+      "source_box": [
+        647,
+        251,
+        832,
+        408
+      ],
+      "position": [
+        647,
+        198
+      ],
+      "size": [
+        185,
+        157
+      ],
+      "transparent": true
+    },
+    "emotion_robot": {
+      "path": "sprites/characters/emotion_robot.png",
+      "screen": "02_emotion",
+      "source_box": [
+        123,
+        522,
+        424,
+        774
+      ],
+      "position": [
+        123,
+        84
+      ],
+      "size": [
+        301,
+        252
+      ],
+      "transparent": true
+    },
+    "rain_robot": {
+      "path": "sprites/characters/rain_robot.png",
+      "screen": "03_umbrella",
+      "source_box": [
+        201,
+        1033,
+        343,
+        1164
+      ],
+      "position": [
+        201,
+        222
+      ],
+      "size": [
+        142,
+        131
+      ],
+      "transparent": true
+    },
+    "rain_cat": {
+      "path": "sprites/characters/rain_cat.png",
+      "screen": "03_umbrella",
+      "source_box": [
+        424,
+        1056,
+        528,
+        1165
+      ],
+      "position": [
+        424,
+        245
+      ],
+      "size": [
+        104,
+        109
+      ],
+      "transparent": true
+    },
+    "rain_elder": {
+      "path": "sprites/characters/rain_elder.png",
+      "screen": "03_umbrella",
+      "source_box": [
+        594,
+        1005,
+        723,
+        1164
+      ],
+      "position": [
+        594,
+        194
+      ],
+      "size": [
+        129,
+        159
+      ],
+      "transparent": true
+    },
+    "rain_basket": {
+      "path": "sprites/props/rain_basket.png",
+      "screen": "03_umbrella",
+      "source_box": [
+        695,
+        1080,
+        778,
+        1162
+      ],
+      "position": [
+        695,
+        269
+      ],
+      "size": [
+        83,
+        82
+      ],
+      "transparent": true
+    },
+    "umbrella": {
+      "path": "sprites/props/umbrella.png",
+      "screen": "03_umbrella",
+      "source_box": [
+        351,
+        886,
+        581,
+        997
+      ],
+      "position": [
+        351,
+        75
+      ],
+      "size": [
+        230,
+        111
+      ],
+      "transparent": true
+    },
+    "umbrella_canopy": {
+      "path": "sprites/props/umbrella_canopy.png",
+      "screen": "03_umbrella",
+      "source_box": [
+        352,
+        889,
+        579,
+        977
+      ],
+      "position": [
+        352,
+        78
+      ],
+      "size": [
+        227,
+        88
+      ],
+      "transparent": true
+    },
+    "cursor_hand": {
+      "path": "sprites/props/cursor_hand.png",
+      "screen": "03_umbrella",
+      "source_box": [
+        471,
+        970,
+        521,
+        1031
+      ],
+      "position": [
+        471,
+        159
+      ],
+      "size": [
+        50,
+        61
+      ],
+      "transparent": true
+    },
+    "passport_book": {
+      "path": "sprites/props/passport_book.png",
+      "screen": "04_passport",
+      "source_box": [
+        168,
+        1282,
+        784,
+        1626
+      ],
+      "position": [
+        168,
+        30
+      ],
+      "size": [
+        616,
+        344
+      ],
+      "transparent": true
+    },
+    "passport_medal": {
+      "path": "sprites/props/passport_medal.png",
+      "screen": "04_passport",
+      "source_box": [
+        580,
+        1509,
+        715,
+        1645
+      ],
+      "position": [
+        580,
+        257
+      ],
+      "size": [
+        135,
+        136
+      ],
+      "transparent": true
+    },
+    "passport_plant": {
+      "path": "sprites/props/passport_plant.png",
+      "screen": "04_passport",
+      "source_box": [
+        11,
+        1361,
+        164,
+        1594
+      ],
+      "position": [
+        11,
+        109
+      ],
+      "size": [
+        153,
+        233
+      ],
+      "transparent": true
+    },
+    "home_logo": {
+      "path": "sprites/interface/home_logo.png",
+      "screen": "01_home",
+      "source_box": [
+        358,
+        90,
+        572,
+        211
+      ],
+      "position": [
+        358,
+        37
+      ],
+      "size": [
+        214,
+        121
+      ],
+      "transparent": true
+    },
+    "home_subtitle": {
+      "path": "sprites/interface/home_subtitle.png",
+      "screen": "01_home",
+      "source_box": [
+        371,
+        225,
+        572,
+        271
+      ],
+      "position": [
+        371,
+        172
+      ],
+      "size": [
+        201,
+        46
+      ],
+      "transparent": true
+    },
+    "home_start_button": {
+      "path": "sprites/interface/home_start_button.png",
+      "screen": "01_home",
+      "source_box": [
+        343,
+        299,
+        586,
+        352
+      ],
+      "position": [
+        343,
+        246
+      ],
+      "size": [
+        243,
+        53
+      ],
+      "transparent": true
+    },
+    "emotion_panel": {
+      "path": "sprites/interface/emotion_panel.png",
+      "screen": "02_emotion",
+      "source_box": [
+        454,
+        509,
+        872,
+        759
+      ],
+      "position": [
+        454,
+        71
+      ],
+      "size": [
+        418,
+        250
+      ],
+      "transparent": true
+    },
+    "emotion_title": {
+      "path": "sprites/interface/emotion_title.png",
+      "screen": "02_emotion",
+      "source_box": [
+        157,
+        461,
+        578,
+        500
+      ],
+      "position": [
+        157,
+        23
+      ],
+      "size": [
+        421,
+        39
+      ],
+      "transparent": true
+    },
+    "umbrella_title": {
+      "path": "sprites/interface/umbrella_title.png",
+      "screen": "03_umbrella",
+      "source_box": [
+        157,
+        832,
+        776,
+        882
+      ],
+      "position": [
+        157,
+        21
+      ],
+      "size": [
+        619,
+        50
+      ],
+      "transparent": true
+    },
+    "rain_score_meter": {
+      "path": "sprites/interface/rain_score_meter.png",
+      "screen": "03_umbrella",
+      "source_box": [
+        389,
+        1194,
+        664,
+        1218
+      ],
+      "position": [
+        389,
+        383
+      ],
+      "size": [
+        275,
+        24
+      ],
+      "transparent": true
+    },
+    "passport_checkmarks": {
+      "path": "sprites/interface/passport_checkmarks.png",
+      "screen": "04_passport",
+      "source_box": [
+        684,
+        1343,
+        718,
+        1432
+      ],
+      "position": [
+        684,
+        91
+      ],
+      "size": [
+        34,
+        89
+      ],
+      "transparent": true
+    },
+    "navbar_full": {
+      "path": "sprites/interface/navbar_full.png",
+      "position": [
+        0,
+        0
+      ],
+      "size": [
+        941,
+        53
+      ],
+      "screen": "01_home",
+      "transparent": false
+    },
+    "down_arrow_1": {
+      "path": "sprites/interface/down_arrow_1.png",
+      "screen": "01_home",
+      "source_box": [
+        437,
+        398,
+        491,
+        456
+      ],
+      "size": [
+        54,
+        58
+      ],
+      "position": [
+        437,
+        345
+      ],
+      "transparent": true
+    },
+    "down_arrow_2": {
+      "path": "sprites/interface/down_arrow_2.png",
+      "screen": "02_emotion",
+      "source_box": [
+        437,
+        778,
+        491,
+        832
+      ],
+      "size": [
+        54,
+        54
+      ],
+      "position": [
+        437,
+        340
+      ],
+      "transparent": true
+    },
+    "down_arrow_3": {
+      "path": "sprites/interface/down_arrow_3.png",
+      "screen": "03_umbrella",
+      "source_box": [
+        437,
+        1222,
+        491,
+        1275
+      ],
+      "size": [
+        54,
+        53
+      ],
+      "position": [
+        437,
+        411
+      ],
+      "transparent": true
+    }
+  }
+}
