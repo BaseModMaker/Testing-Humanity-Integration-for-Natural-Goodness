@@ -18,10 +18,9 @@ const ASSETS = {
   transition: `${PUBLIC}/assets/rain-transition.png`,
   sunny: `${PUBLIC}/assets/sunny-background.png`,
   umbrella: `${PUBLIC}/assets/umbrella.png`,
-  shadow: `${PUBLIC}/assets/shadow.png`,
-  robot: `${PUBLIC}/assets/Robot Sprite 3.png`,
-  cat: `${PUBLIC}/assets/cat.png`,
-  elder: `${PUBLIC}/assets/elder.png`,
+  robot_shadow : `${PUBLIC}/assets/Robot Sprite 3 shadow.png`,
+  cat_shadow: `${PUBLIC}/assets/cat shadow.png`,
+  elder_shadow: `${PUBLIC}/assets/elder shadow.png`,
 };
 
 // --------------------------------------------------
@@ -36,46 +35,28 @@ const RAIN_PER_SECOND = 80;
 
 const CHARACTERS = [
   {
-    id: "robot",
+    id: "robot_shadow",
     payoffs: [[20, 0, 0], [40, 0, 0], [60, 0, 0], [80, 0, 0]],
     x: 190,
     y: 350,
     width: 118,
     height: 160,
-    shadow: {
-      width: "100%",
-      bottom: "-12px",
-      left: "50%",
-      opacity: 0.8,
-    },
   },
   {
-    id: "cat",
+    id: "cat_shadow",
     payoffs: [[15, 10, 20], [30, 20, 40], [40, 30, 60], [50, 40, 80]],
     x: 450,
     y: 390,
     width: 105,
     height: 90,
-    shadow: {
-      width: "100%",
-      bottom: "-12px",
-      left: "50%",
-      opacity: 0.8,
-    },
   },
   {
-    id: "elder",
+    id: "elder_shadow",
     payoffs: [[18, 6, 0], [35, 12, 0], [50, 18, 0], [65, 25, 0]],
     x: 705,
     y: 310,
     width: 112,
     height: 170,
-    shadow: {
-      width: "100%",
-      bottom: "-12px",
-      left: "50%",
-      opacity: 0.8,
-    },
   },
 ];
 
@@ -84,9 +65,9 @@ function initialProgress() {
     elapsed: 0,
     blocked: 0,
     shelter: {
-      robot: 0,
-      cat: 0,
-      elder: 0,
+      robot_shadow: 0,
+      cat_shadow: 0,
+      elder_shadow: 0,
     },
   };
 }
@@ -942,18 +923,6 @@ export default function UmbrellaDilemma({
               height: `${(character.height / HEIGHT) * 100}%`,
             }}
           >
-            <img
-              className="umbrella-character-shadow"
-              src={ASSETS.shadow}
-              alt=""
-              draggable={false}
-              style={{
-                width: character.shadow.width,
-                bottom: character.shadow.bottom,
-                left: character.shadow.left,
-                opacity: character.shadow.opacity,
-              }}
-            />
             <img
               className="umbrella-character"
               src={ASSETS[character.id]}
