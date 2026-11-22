@@ -1,3 +1,4 @@
+import GameRewardSummary from "./GameRewardSummary";
 import React, { useEffect, useRef, useState } from "react";
 import { GameHeader } from "./GameBars";
 
@@ -16,8 +17,8 @@ const STARTING_APPROACH = 0.5;
 
 export function getDrivingScores(collision) {
   return {
-    Ecology: collision === "left" ? 80 : 0,
-    Adaptability: collision === "both" ? 0 : 50,
+    Ecology: collision === "left" ? 10 : collision === "right" ? 15 : 0,
+    Adaptability: collision === "left" ? 15 : collision === "right" ? 40 : 0,
   };
 }
 
@@ -148,7 +149,7 @@ export default function DrivingMiniGame({
         : "cat";
 
   return (
-    <div className={`driving-game ${running ? "is-running" : "is-finished"}`}>
+    <div className={`driving-game ${running ? "is-running" : "is-finished"} ${started ? "is-started" : ""}`}>
       <style>{`
         .driving-game {
           --thing-cream: rgb(248, 236, 221);
@@ -365,86 +366,6 @@ export default function DrivingMiniGame({
           pointer-events: none;
         }
 
-        /* Completion screen: cream card, olive button and soft overlay. */
-        .dg-overlay {
-          position: absolute;
-          inset: 0;
-          z-index: 20;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          background: rgba(30, 42, 35, .29);
-          backdrop-filter: blur(2px);
-        }
-        .dg-result-card {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 16px;
-          width: min(100%, 480px);
-          padding: clamp(24px, 4vw, 40px);
-          border: 1px solid #b9b19f;
-          border-radius: 18px;
-          background: rgba(248, 236, 221, .98);
-          box-shadow: 0 18px 55px rgba(35, 45, 35, .20);
-          text-align: center;
-          color: var(--thing-ink);
-        }
-        .dg-result-eyebrow {
-          margin: 0;
-          color: #667354;
-          font-size: 12px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: .12em;
-        }
-        .dg-result-card h2 {
-          margin: 0;
-          font-size: clamp(21px, 3vw, 29px);
-          line-height: 1.25;
-          color: var(--thing-ink);
-        }
-        .dg-score-cards {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 12px;
-          width: 100%;
-        }
-        .dg-score-card {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-          padding: 13px 10px;
-          border: 1px solid #d1c8b7;
-          border-radius: 10px;
-          background: #f9f3e6;
-        }
-        .dg-score-card span {
-          font-size: 12px;
-          font-weight: 700;
-          color: #647459;
-        }
-        .dg-score-card strong {
-          font-size: 23px;
-          font-weight: 800;
-          color: #526b43;
-        }
-        .dg-continue {
-          width: 100%;
-          min-height: 46px;
-          padding: 11px 20px;
-          border: 1px solid #63784b;
-          border-radius: 10px;
-          background: #758d61;
-          color: #fffaf0;
-          font-size: 15px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: background .15s ease;
-        }
-        .dg-continue:hover { background: #617c4c; }
-        .dg-continue:focus-visible,
         .dg-wheel-image:focus-visible {
           outline: 3px solid #93ab63;
           outline-offset: 3px;
@@ -461,12 +382,13 @@ export default function DrivingMiniGame({
           25%, 75% { translate: 0 -1px; }
           50% { translate: 0 1px; }
         }
-        .driving-game.is-running .dg-interior {
-          animation: carShake .22s infinite ease-in-out;
-        }
-        .driving-game.is-running .dg-wheel-image {
-          animation: wheelShake .18s infinite ease-in-out;
-        }
+.driving-game.is-running.is-started .dg-interior {
+  animation: carShake .22s infinite ease-in-out;
+}
+
+.driving-game.is-running.is-started .dg-wheel-image {
+  animation: wheelShake .18s infinite ease-in-out;
+}
         @media (prefers-reduced-motion: reduce) {
           .driving-game.is-running .dg-interior,
           .driving-game.is-running .dg-wheel-image {
@@ -490,7 +412,6 @@ export default function DrivingMiniGame({
           .dg-header-content { flex-direction: column; gap: 8px; }
           .dg-header-time, .dg-progress { width: 100%; }
           .dg-heading { font-size: 17px; }
-          .dg-score-cards { gap: 8px; }
         }
       `}</style>
 
@@ -599,29 +520,14 @@ export default function DrivingMiniGame({
         )}
 
         {result && (
-          <div className="dg-overlay">
-            <section className="dg-result-card" aria-label="Driving result">
-              <p className="dg-result-eyebrow">Test complete</p>
-              <h2>You hit the {collisionName}!</h2>
-              <div className="dg-score-cards">
-                <div className="dg-score-card">
-                  <span>Ecology points</span>
-                  <strong>+{scores.Ecology}</strong>
-                </div>
-                <div className="dg-score-card">
-                  <span>Adaptability</span>
-                  <strong>{scores.Adaptability}/100</strong>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="dg-continue"
-                onClick={() => onContinue(result, scores)}
-              >
-                Continue
-              </button>
-            </section>
-          </div>
+          <GameRewardSummary
+            title={`You hit the ${collisionName}!`}
+            rewards={[
+              ["Ecology", scores.Ecology],
+              ["Adaptability", scores.Adaptability],
+            ]}
+            onContinue={() => onContinue(result, scores)}
+          />
         )}
       </main>
     </div>
