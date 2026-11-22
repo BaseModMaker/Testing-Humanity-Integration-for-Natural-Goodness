@@ -17,8 +17,8 @@ const STARTING_APPROACH = 0.5;
 
 export function getDrivingScores(collision) {
   return {
-    Ecology: collision === "left" ? 80 : 0,
-    Adaptability: collision === "both" ? 0 : 50,
+    Ecology: collision === "left" ? 10 : collision === "right" ? 15 : 0,
+    Adaptability: collision === "left" ? 15 : collision === "right" ? 40 : 0,
   };
 }
 
@@ -149,7 +149,7 @@ export default function DrivingMiniGame({
         : "cat";
 
   return (
-    <div className={`driving-game ${running ? "is-running" : "is-finished"}`}>
+    <div className={`driving-game ${running ? "is-running" : "is-finished"} ${started ? "is-started" : ""}`}>
       <style>{`
         .driving-game {
           --thing-cream: rgb(248, 236, 221);
@@ -382,12 +382,13 @@ export default function DrivingMiniGame({
           25%, 75% { translate: 0 -1px; }
           50% { translate: 0 1px; }
         }
-        .driving-game.is-running .dg-interior {
-          animation: carShake .22s infinite ease-in-out;
-        }
-        .driving-game.is-running .dg-wheel-image {
-          animation: wheelShake .18s infinite ease-in-out;
-        }
+.driving-game.is-running.is-started .dg-interior {
+  animation: carShake .22s infinite ease-in-out;
+}
+
+.driving-game.is-running.is-started .dg-wheel-image {
+  animation: wheelShake .18s infinite ease-in-out;
+}
         @media (prefers-reduced-motion: reduce) {
           .driving-game.is-running .dg-interior,
           .driving-game.is-running .dg-wheel-image {
