@@ -15,8 +15,12 @@ const PUBLIC = process.env.PUBLIC_URL || "";
 
 const ASSETS = {
   background: `${PUBLIC}/assets/rain_background.png`,
-  transition: `${PUBLIC}/assets/rain-transition.png`,
-  sunny: `${PUBLIC}/assets/sunny-background.png`,
+  // Preferred filenames from the updated art assets.
+  transition: `${PUBLIC}/assets/rain_transition.png`,
+  sunny: `${PUBLIC}/assets/sunny_background.png`,
+  // Older file naming is supported as a fallback.
+  transitionLegacy: `${PUBLIC}/assets/rain-transition.png`,
+  sunnyLegacy: `${PUBLIC}/assets/sunny-background.png`,
   umbrella: `${PUBLIC}/assets/umbrella.png`,
   robot_shadow : `${PUBLIC}/assets/Robot Sprite 3 shadow.png`,
   cat_shadow: `${PUBLIC}/assets/cat shadow.png`,
@@ -34,6 +38,11 @@ const SHELTER_MILESTONES = [2, 5, 8, 11];
 const RAIN_PER_SECOND = 80;
 // Short visual thunder intro before raindrops begin.
 const THUNDER_INTRO_MS = 1550;
+// First crossfade the rain into the cloudy transitional scene,
+// then fade in sunshine. Show the Continue dialog only afterward.
+const WEATHER_TRANSITION_MS = 750;
+const WEATHER_SUNRISE_MS = 750;
+const RESULTS_DELAY_MS = 200;
 
 const CHARACTERS = [
   {
@@ -151,6 +160,11 @@ export default function UmbrellaDilemma({
 
   const [cursor, setCursor] = useState(initialCursor);
   const [stormReady, setStormReady] = useState(false);
+  const [weatherPhase, setWeatherPhase] = useState("rain");
+  const [showResults, setShowResults] = useState(false);
+  const [finalResult, setFinalResult] = useState(null);
+  const continueButtonRef = useRef(null);
+  const continuedRef = useRef(false);
   // The animation loop reads the ref so it does not restart when the intro ends.
   const stormReadyRef = useRef(false);
   const [hud, setHud] = useState({
@@ -190,6 +204,32 @@ export default function UmbrellaDilemma({
   }, []);
 
   // ------------------------------------------------
+  // WEATHER AND RESULTS SEQUENCE
+  // ------------------------------------------------
+  // The stage stays mounted throughout the crossfades so the characters,
+  // background and rain do not jump while we switch artwork.
+  useEffect(() => {
+    if (!hud.finished) return;
+
+    const toSunny = setTimeout(() => {
+      setWeatherPhase("sunny");
+    }, WEATHER_TRANSITION_MS);
+
+    const toResults = setTimeout(() => {
+      setShowResults(true);
+    }, WEATHER_TRANSITION_MS + WEATHER_SUNRISE_MS + RESULTS_DELAY_MS);
+
+    return () => {
+      clearTimeout(toSunny);
+      clearTimeout(toResults);
+    };
+  }, [hud.finished]);
+
+  useEffect(() => {
+    if (showResults) continueButtonRef.current?.focus();
+  }, [showResults]);
+
+  // ------------------------------------------------
   // FINISH THE TEST
   // ------------------------------------------------
 
@@ -202,9 +242,13 @@ export default function UmbrellaDilemma({
     }
 
     finishedRef.current = true;
+    umbrellaRef.current = { ...umbrellaRef.current, visible: false };
+    setCursor((previous) => ({ ...previous, visible: false }));
+    setWeatherPhase("transition");
 
     const progress = progressRef.current;
     const result = buildUmbrellaResult(progress);
+    setFinalResult(result);
 
     setHud({
       elapsed: progress.elapsed,
@@ -214,9 +258,16 @@ export default function UmbrellaDilemma({
       finished: true,
     });
 
+    // Save the final score immediately; navigation waits for Continue.
     scoresCallbackRef.current?.(result);
-    completeCallbackRef.current?.(result);
   }, []);
+
+  function handleContinue() {
+    if (!showResults || !finalResult || continuedRef.current) return;
+    continuedRef.current = true;
+    // The parent App chooses which minigame comes next.
+    completeCallbackRef.current?.(finalResult);
+  }
 
   // ------------------------------------------------
   // UMBRELLA POSITION
@@ -313,8 +364,9 @@ export default function UmbrellaDilemma({
 
       previousTime = timestamp;
 
-      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+      // Keep the final rain frame on canvas during its fade-out.
       if (finishedRef.current) return;
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
       const umbrella = umbrellaRef.current;
       const active =
@@ -700,20 +752,34 @@ export default function UmbrellaDilemma({
           pointer-events: none;
         }
 
+        /* Three distinct backgrounds overlap at exactly the same coordinates.
+           Only the upper two fade in, so there is never an abrupt image swap. */
         .umbrella-weather {
           opacity: 0;
+          will-change: opacity;
         }
-
-        .umbrella-stage[data-finished="true"] .umbrella-weather {
+        .umbrella-weather-transition {
+          transition: opacity ${WEATHER_TRANSITION_MS}ms ease-in-out;
+        }
+        .umbrella-weather-sunny {
+          transition: opacity ${WEATHER_SUNRISE_MS}ms ease-in-out;
+        }
+        .umbrella-stage[data-weather="transition"] .umbrella-weather-transition,
+        .umbrella-stage[data-weather="sunny"] .umbrella-weather-transition {
           opacity: 1;
         }
-
-        .umbrella-stage[data-finished="true"] .umbrella-weather-sunny {
-          transition: opacity 650ms ease 900ms;
+        .umbrella-stage[data-weather="sunny"] .umbrella-weather-sunny {
+          opacity: 1;
+        }
+        .umbrella-stage[data-finished="true"] .umbrella-rain {
+          opacity: 0;
+          transition: opacity 900ms ease-out;
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .umbrella-stage[data-finished="true"] .umbrella-weather-sunny {
+          .umbrella-weather-transition,
+          .umbrella-weather-sunny,
+          .umbrella-stage[data-finished="true"] .umbrella-rain {
             transition-duration: 0ms;
           }
         }
@@ -890,25 +956,115 @@ export default function UmbrellaDilemma({
           transition: width .1s linear;
         }
 
-        .umbrella-finished {
+        /* Results dialog only appears once the sunny scene is fully visible. */
+        .umbrella-results-overlay {
           position: absolute;
           inset: 0;
+          z-index: 10;
           display: grid;
           place-items: center;
-          z-index: 5;
-          pointer-events: none;
+          padding: 20px;
+          background: rgba(25, 42, 36, .32);
+          backdrop-filter: blur(2px);
+          animation: umbrella-overlay-in 300ms ease-out both;
         }
-        .umbrella-finished-symbol {
+        .umbrella-results-card {
+          width: min(440px, 100%);
+          padding: clamp(22px, 4vw, 36px);
+          color: var(--thing-ink);
+          background: rgb(248, 236, 221);
+          border: 1px solid #a5a18a;
+          border-radius: 20px;
+          box-shadow: 0 18px 54px rgba(28, 41, 33, .23);
+          text-align: center;
+          animation: umbrella-dialog-in 380ms cubic-bezier(.2, .8, .2, 1) both;
+        }
+        .umbrella-results-icon {
           display: grid;
           place-items: center;
-          width: 90px;
-          height: 90px;
+          width: 56px;
+          height: 56px;
+          margin: 0 auto 14px;
+          border: 2px solid #829b6c;
           border-radius: 50%;
-          border: 3px solid #6c8851;
-          background: var(--thing-cream);
-          color: #6c8851;
-          font-size: 54px;
-          box-shadow: 0 5px 24px rgba(26,44,29,.2);
+          color: #597449;
+          background: #e4ebcf;
+          font-size: 30px;
+        }
+        .umbrella-results-eyebrow {
+          margin: 0 0 6px;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: .12em;
+          text-transform: uppercase;
+          color: #738563;
+        }
+        .umbrella-results-title {
+          margin: 0 0 8px;
+          font-size: clamp(24px, 4vw, 30px);
+          letter-spacing: -.025em;
+        }
+        .umbrella-results-copy {
+          margin: 0 0 22px;
+          color: #646b58;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+        .umbrella-results-scores {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+          margin-bottom: 24px;
+        }
+        .umbrella-results-score {
+          padding: 11px 7px;
+          border: 1px solid #c8c5b1;
+          border-radius: 12px;
+          background: rgba(255, 255, 255, .36);
+        }
+        .umbrella-results-score strong {
+          display: block;
+          margin-bottom: 3px;
+          font-size: 23px;
+          color: #5b754b;
+          font-variant-numeric: tabular-nums;
+        }
+        .umbrella-results-score span {
+          display: block;
+          font-size: 11px;
+          color: #667057;
+        }
+        .umbrella-next-button {
+          width: 100%;
+          min-height: 49px;
+          padding: 12px 18px;
+          border: 1px solid #5e754e;
+          border-radius: 12px;
+          background: #778f63;
+          color: #fffaf0;
+          font-size: 16px;
+          font-weight: 700;
+          font-family: inherit;
+          cursor: pointer;
+          transition: background 150ms ease, transform 150ms ease;
+        }
+        .umbrella-next-button:hover { background: #617d50; }
+        .umbrella-next-button:active { transform: scale(.985); }
+        .umbrella-next-button:focus-visible {
+          outline: 3px solid #a7c989;
+          outline-offset: 3px;
+        }
+        @keyframes umbrella-overlay-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes umbrella-dialog-in {
+          from { opacity: 0; transform: translateY(14px) scale(.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .umbrella-results-card,
+          .umbrella-results-overlay { animation: none; }
         }
 
         @media (max-width: 1000px) {
@@ -1010,6 +1166,7 @@ export default function UmbrellaDilemma({
       <div
         className="umbrella-stage"
         data-finished={hud.finished}
+        data-weather={weatherPhase}
         style={{ cursor: hud.finished ? "auto" : "none" }}
         aria-label="Move the umbrella to shelter characters from rain"
         onPointerEnter={moveUmbrella}
@@ -1020,8 +1177,29 @@ export default function UmbrellaDilemma({
         onPointerLeave={hideUmbrella}
       >
         <img className="umbrella-background" src={ASSETS.background} alt="" draggable={false} />
-        <img className="umbrella-background umbrella-weather" src={ASSETS.transition} alt="" draggable={false} />
-        <img className="umbrella-background umbrella-weather umbrella-weather-sunny" src={ASSETS.sunny} alt="" draggable={false} />
+        <img
+          className="umbrella-background umbrella-weather umbrella-weather-transition"
+          src={ASSETS.transition}
+          onError={(event) => {
+            // Support the earlier hyphenated asset name without a reload loop.
+            if (!event.currentTarget.src.endsWith("rain-transition.png")) {
+              event.currentTarget.src = ASSETS.transitionLegacy;
+            }
+          }}
+          alt=""
+          draggable={false}
+        />
+        <img
+          className="umbrella-background umbrella-weather umbrella-weather-sunny"
+          src={ASSETS.sunny}
+          onError={(event) => {
+            if (!event.currentTarget.src.endsWith("sunny-background.png")) {
+              event.currentTarget.src = ASSETS.sunnyLegacy;
+            }
+          }}
+          alt=""
+          draggable={false}
+        />
         <div className="umbrella-ground" />
 
         {/* A branching lightning strike briefly lights the sky before rain starts. */}
@@ -1084,7 +1262,6 @@ export default function UmbrellaDilemma({
         <canvas
           ref={canvasRef}
           className="umbrella-rain"
-          hidden={hud.finished}
           width={WIDTH}
           height={HEIGHT}
           aria-hidden="true"
@@ -1103,9 +1280,46 @@ export default function UmbrellaDilemma({
           />
         )}
 
-        {hud.finished && (
-          <div className="umbrella-finished">
-            <div className="umbrella-finished-symbol" aria-label="Test complete">✓</div>
+        {showResults && finalResult && (
+          <div className="umbrella-results-overlay">
+            <section
+              className="umbrella-results-card"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="umbrella-results-title"
+              aria-describedby="umbrella-results-description"
+            >
+              <div className="umbrella-results-icon" aria-hidden="true">✓</div>
+              <p className="umbrella-results-eyebrow">Test 1 / 4 completed</p>
+              <h2 id="umbrella-results-title" className="umbrella-results-title">
+                The rain has passed
+              </h2>
+              <p id="umbrella-results-description" className="umbrella-results-copy">
+                Every choice matters. Here's how you did.
+              </p>
+              <div className="umbrella-results-scores" aria-label="Your scores">
+                <div className="umbrella-results-score">
+                  <strong>{finalResult.scores.rainProtection}</strong>
+                  <span>Protection</span>
+                </div>
+                <div className="umbrella-results-score">
+                  <strong>{finalResult.scores.empathy}</strong>
+                  <span>Empathy</span>
+                </div>
+                <div className="umbrella-results-score">
+                  <strong>{finalResult.scores.ecology}</strong>
+                  <span>Ecology</span>
+                </div>
+              </div>
+              <button
+                ref={continueButtonRef}
+                type="button"
+                className="umbrella-next-button"
+                onClick={handleContinue}
+              >
+                Continue to next test →
+              </button>
+            </section>
           </div>
         )}
       </div>
