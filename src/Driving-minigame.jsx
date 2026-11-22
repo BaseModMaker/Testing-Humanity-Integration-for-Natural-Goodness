@@ -17,8 +17,8 @@ const STARTING_APPROACH = 0.5;
 
 export function getDrivingScores(collision) {
   return {
-    Ecology: collision === "left" ? 10 : collision === "right" ? 15 : 0,
-    Adaptability: collision === "left" ? 15 : collision === "right" ? 40 : 0,
+    Ecology: collision === "left" ? 0 : collision === "right" ? 15 : 0,
+    Adaptability: collision === "left" ? 5 : collision === "right" ? 40 : 0,
   };
 }
 
