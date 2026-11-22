@@ -8,8 +8,8 @@ const ASSETS = {
   background: `${PUBLIC}/assets/street_background2.png`,
   interior: `${PUBLIC}/assets/car-interior.png`,
   wheel: `${PUBLIC}/assets/steering-wheel2.png`,
-  elder: `${PUBLIC}/assets/elder.png`,
-  cat: `${PUBLIC}/assets/cat.png`,
+  elder: `${PUBLIC}/assets/elder shadow.png`,
+  hamster: `${PUBLIC}/assets/hamster shadow.png`,
 };
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -143,10 +143,10 @@ export default function DrivingMiniGame({
   const scores = result ? getDrivingScores(result) : null;
   const collisionName =
     result === "both"
-      ? "grandma and cat"
+      ? "grandma and hamster"
       : result === "left"
         ? "grandma"
-        : "cat";
+        : "hamster";
 
   return (
     <div className={`driving-game ${running ? "is-running" : "is-finished"} ${started ? "is-started" : ""}`}>
@@ -488,7 +488,7 @@ export default function DrivingMiniGame({
                 transform: `translate(-50%, -50%) scale(${objectScale})`,
               }}
             >
-              <img src={ASSETS.cat} alt="" draggable={false} />
+              <img src={ASSETS.hamster} alt="" draggable={false} />
             </div>
           </div>
         </div>

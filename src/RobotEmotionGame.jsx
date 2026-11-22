@@ -578,14 +578,17 @@ export default function RobotEmotionGame({
         }
         .robot-background {
           position: absolute;
-          inset: 0;
-          z-index: -2;
+          top: 0;
+          left: 0;
           width: 100%;
           height: 100%;
+
           object-fit: cover;
-          object-position: center;
+          object-position: center top;
+
           image-rendering: pixelated;
           pointer-events: none;
+          z-index: -2;
         }
         .robot-background-tint {
           position: absolute;
