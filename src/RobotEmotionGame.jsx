@@ -77,6 +77,13 @@ function makeTarget(emotion) {
     for (let x = -8; x <= 8; x++) {
       add(21 + x, Math.abs(x) > 6 ? 21 : 20);
     }
+
+    // Mirror the two inward-sloping eyebrows shown in the anger icon.
+    for (let step = 0; step <= 7; step++) {
+      const row = 5 + Math.round(step * 4 / 7);
+      add(10 + step, row);
+      add(32 - step, row);
+    }
   }
 
   return [...new Set(points)].map(unpack);
@@ -114,7 +121,9 @@ export function calculateScore(drawing, emotion) {
     y - dy + ty,
   ]);
 
-  // Compare a point against the closest reference point
+  // Forgive small pixel differences, then reduce credit as the shapes diverge.
+  const freehandTolerance = emotion === "anger" ? 1.5 : 0.75;
+  const falloffDistance = 2;
   const similarity = ([x, y], points) => {
     let distance = Infinity;
 
@@ -125,7 +134,8 @@ export function calculateScore(drawing, emotion) {
       );
     }
 
-    return Math.max(0, 1 - distance / 3.2);
+    const excessDistance = Math.max(0, distance - freehandTolerance);
+    return Math.max(0, 1 - excessDistance / falloffDistance);
   };
 
   // How much of the target shape has been reproduced?
@@ -142,8 +152,8 @@ export function calculateScore(drawing, emotion) {
       0
     ) / aligned.length;
 
-  const total = coverage + precision;
-  return total === 0 ? 0 : Math.round(100 * (2 * coverage * precision) / total);
+  // A high score requires both a complete shape and little stray ink.
+  return Math.round(100 * coverage * precision);
 }
 
 // --------------------------------------------------
