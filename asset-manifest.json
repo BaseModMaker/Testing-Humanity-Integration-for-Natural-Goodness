@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/Testing-Humanity-Integration-for-Natural-Goodness/static/css/main.64e3f0f7.css",
-    "main.js": "/Testing-Humanity-Integration-for-Natural-Goodness/static/js/main.47ba5e81.js",
+    "main.js": "/Testing-Humanity-Integration-for-Natural-Goodness/static/js/main.5e2e1f99.js",
     "static/js/453.b2c65378.chunk.js": "/Testing-Humanity-Integration-for-Natural-Goodness/static/js/453.b2c65378.chunk.js",
     "index.html": "/Testing-Humanity-Integration-for-Natural-Goodness/index.html",
     "main.64e3f0f7.css.map": "/Testing-Humanity-Integration-for-Natural-Goodness/static/css/main.64e3f0f7.css.map",
-    "main.47ba5e81.js.map": "/Testing-Humanity-Integration-for-Natural-Goodness/static/js/main.47ba5e81.js.map",
+    "main.5e2e1f99.js.map": "/Testing-Humanity-Integration-for-Natural-Goodness/static/js/main.5e2e1f99.js.map",
     "453.b2c65378.chunk.js.map": "/Testing-Humanity-Integration-for-Natural-Goodness/static/js/453.b2c65378.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.64e3f0f7.css",
-    "static/js/main.47ba5e81.js"
+    "static/js/main.5e2e1f99.js"
   ]
 }
