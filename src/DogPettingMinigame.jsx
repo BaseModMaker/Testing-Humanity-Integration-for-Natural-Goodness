@@ -5,10 +5,10 @@ import { GameHeader } from "./GameBars";
 
 const dogSrc = "/assets/dog.png";
 const dogLoveSrc = "/assets/dog_tongue.png";
-const dogFrameSrc = "/assets/dog_frame.png";
+const dogFrameSrc = "/assets/dog_frame2.png";
 const dogAngrySrc = "/assets/DogLockIn.png"
 const publicPath = process.env.PUBLIC_URL || "";
-const backgroundSrc = "/assets/courtyard_background.png";
+const backgroundSrc = "/assets/sunny-background.png";
 const GAME_DURATION = 10000;
 const tailImages = [
     "/assets/dog_tail1.png",
@@ -465,15 +465,17 @@ const DogPettingMiniGame = ({
             pointer-events: none;
           }
           .dog-frame {
-            position: absolute;
-            inset: 0;
-            z-index: 4;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            image-rendering: pixelated;
-            pointer-events: none;
-            -webkit-user-drag: none;
+                position: absolute;
+                inset: 0;
+                z-index: 4;
+                width: 222%;
+                height: 142%;
+                object-fit: contain;
+                image-rendering: pixelated;
+                pointer-events: none;
+                -webkit-user-drag: none;
+                left: 50%;
+                transform: translate(-50%, -13%);
           }
           .pet-area {
             position: absolute;
