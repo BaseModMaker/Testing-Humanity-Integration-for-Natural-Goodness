@@ -135,15 +135,26 @@ function radarPoint(index, radius) {
   return [175 + Math.cos(angle) * radius, 123 + Math.sin(angle) * radius];
 }
 
+const radarLabelPositions = {
+  Preservation: [175, 14],
+  Empathy: [302, 77],
+  Ecology: [252, 214],
+  Cooperation: [98, 214],
+  Adaptability: [48, 77],
+};
+
 function AssessmentRadar({ scores }) {
   const values = assessmentFields.map((field) => scores[field]);
   const hasAllScores = values.every((value) => typeof value === "number");
   const radiusPerPoint = 0.90;
   const outerRadius = 100 * radiusPerPoint;
+  const scorePoints = hasAllScores ? values.map((value, index) => (
+    radarPoint(index, value * radiusPerPoint).join(",")
+  )) : [];
 
   return (
     <figure className="passport-radar">
-      <svg viewBox="0 0 350 212" role="img" aria-labelledby="radar-description">
+      <svg viewBox="0 0 350 238" role="img" aria-labelledby="radar-description">
         <title id="radar-description">
           {assessmentFields.map((field, index) => (
             `${field}: ${values[index] ?? "not assessed"}${values[index] == null ? "" : " out of 100"}`
@@ -157,24 +168,33 @@ function AssessmentRadar({ scores }) {
           />
         ))}
         {hasAllScores && (
-          <polygon className="radar-score" points={values.map((value, index) => (
-            radarPoint(index, value * radiusPerPoint).join(",")
-          )).join(" ")} />
+          <g className="radar-result" aria-hidden="true">
+            {scorePoints.map((point, index) => (
+              <polygon
+                key={assessmentFields[index]}
+                className="radar-result-triangle"
+                points={`175,123 ${point} ${scorePoints[(index + 1) % scorePoints.length]}`}
+              />
+            ))}
+            <polygon className="radar-result-outline" points={scorePoints.join(" ")} />
+          </g>
         )}
         {assessmentFields.map((field, index) => {
           const [x, y] = radarPoint(index, outerRadius);
-          const [labelX, labelY] = radarPoint(index, outerRadius + 11);
+          const [labelX, labelY] = radarLabelPositions[field];
           const value = values[index];
-          const [scoreX, scoreY] = radarPoint(index, (value ?? 0) * radiusPerPoint);
           return (
             <g key={field}>
               {field === "Ecology" && <title>Cat shelter points plus 80 for sparing the cat while driving, capped at 100</title>}
               <line className="radar-grid" x1="175" y1="123" x2={x} y2={y} />
-              {value != null && <circle className="radar-score" cx={scoreX} cy={scoreY} r="4" />}
-              <text x={labelX} y={labelY - 4} textAnchor={index === 0 ? "middle" : index < 3 ? "start" : "end"}>
-                <tspan x={labelX}>{field}</tspan>
-                {value != null && <tspan x={labelX} dy="16">{value}</tspan>}
+              <text x={labelX} y={labelY} textAnchor="middle">
+                {field}
               </text>
+              {value != null && (
+                <text className="radar-label-value" x={labelX} y={labelY + 15} textAnchor="middle">
+                  {value}
+                </text>
+              )}
             </g>
           );
         })}
