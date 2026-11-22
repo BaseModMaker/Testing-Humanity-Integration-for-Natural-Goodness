@@ -18,7 +18,7 @@ test('prefills the passport with editable defaults', () => {
   expect(screen.getByText('Passport validation')).toBeInTheDocument();
   expect(screen.queryByText(/awaiting assessment/i)).toBeNull();
   const model = screen.getByLabelText(/model/i);
-  expect(model).toHaveValue('BeepBoop-VPro-Max');
+  expect(model).toHaveValue('Be3P-Bo0P');
   expect(screen.getByLabelText(/serial no/i)).toHaveValue('404');
   expect(screen.getByLabelText(/company/i)).toHaveValue('Robot Inc.');
   expect(screen.getByLabelText(/prod. year/i)).toHaveValue('2027');
@@ -91,7 +91,7 @@ test('runs the games in order and keeps passport data in memory', async () => {
     unmount();
     render(<App />);
     expect(screen.queryByRole('status')).toBeNull();
-    expect(screen.getByLabelText(/model/i)).toHaveValue('BeepBoop-VPro-Max');
+    expect(screen.getByLabelText(/model/i)).toHaveValue('Be3P-Bo0P');
     expect(screen.getByRole('img', { name: /Preservation: not assessed/ })).toBeInTheDocument();
   } finally {
     requestFrame.mockRestore();

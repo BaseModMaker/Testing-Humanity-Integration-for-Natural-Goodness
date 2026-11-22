@@ -287,7 +287,7 @@ export default function App() {
   const [umbrellaScores, setUmbrellaScores] = useState(null);
   const [completed, setCompleted] = useState(false);
   const [passport, setPassport] = useState({
-    model: "BeepBoop-VPro-Max",
+    model: "Be3P-Bo0P",
     serialNumber: "404",
     parentCompany: "Robot Inc.",
     productionYear: "2027",
