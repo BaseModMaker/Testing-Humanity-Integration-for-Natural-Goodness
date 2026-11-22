@@ -18,10 +18,9 @@ const ASSETS = {
   transition: `${PUBLIC}/assets/rain-transition.png`,
   sunny: `${PUBLIC}/assets/sunny-background.png`,
   umbrella: `${PUBLIC}/assets/umbrella.png`,
-  shadow: `${PUBLIC}/assets/shadow.png`,
-  robot: `${PUBLIC}/assets/Robot Sprite 3.png`,
-  cat: `${PUBLIC}/assets/cat.png`,
-  elder: `${PUBLIC}/assets/elder.png`,
+  robot_shadow : `${PUBLIC}/assets/Robot Sprite 3 shadow.png`,
+  cat_shadow: `${PUBLIC}/assets/cat shadow.png`,
+  elder_shadow: `${PUBLIC}/assets/elder shadow.png`,
 };
 
 // --------------------------------------------------
@@ -33,49 +32,33 @@ const HEIGHT = 540;
 const DURATION = 12;
 const SHELTER_MILESTONES = [2, 5, 8, 11];
 const RAIN_PER_SECOND = 80;
+// Short visual thunder intro before raindrops begin.
+const THUNDER_INTRO_MS = 1550;
 
 const CHARACTERS = [
   {
-    id: "robot",
+    id: "robot_shadow",
     payoffs: [[20, 0, 0], [40, 0, 0], [60, 0, 0], [80, 0, 0]],
     x: 190,
     y: 350,
     width: 118,
     height: 160,
-    shadow: {
-      width: "100%",
-      bottom: "-12px",
-      left: "50%",
-      opacity: 0.8,
-    },
   },
   {
-    id: "cat",
+    id: "cat_shadow",
     payoffs: [[15, 10, 20], [30, 20, 40], [40, 30, 60], [50, 40, 80]],
     x: 450,
     y: 390,
     width: 105,
     height: 90,
-    shadow: {
-      width: "100%",
-      bottom: "-12px",
-      left: "50%",
-      opacity: 0.8,
-    },
   },
   {
-    id: "elder",
+    id: "elder_shadow",
     payoffs: [[18, 6, 0], [35, 12, 0], [50, 18, 0], [65, 25, 0]],
     x: 705,
     y: 310,
     width: 112,
     height: 170,
-    shadow: {
-      width: "100%",
-      bottom: "-12px",
-      left: "50%",
-      opacity: 0.8,
-    },
   },
 ];
 
@@ -84,9 +67,9 @@ function initialProgress() {
     elapsed: 0,
     blocked: 0,
     shelter: {
-      robot: 0,
-      cat: 0,
-      elder: 0,
+      robot_shadow: 0,
+      cat_shadow: 0,
+      elder_shadow: 0,
     },
   };
 }
@@ -167,6 +150,9 @@ export default function UmbrellaDilemma({
   const canvasRef = useRef(null);
 
   const [cursor, setCursor] = useState(initialCursor);
+  const [stormReady, setStormReady] = useState(false);
+  // The animation loop reads the ref so it does not restart when the intro ends.
+  const stormReadyRef = useRef(false);
   const [hud, setHud] = useState({
     ...initialProgress(),
     started: false,
@@ -188,6 +174,20 @@ export default function UmbrellaDilemma({
     scoresCallbackRef.current = onScoresChange;
     completeCallbackRef.current = onComplete;
   }, [onScoresChange, onComplete]);
+
+  // ------------------------------------------------
+  // THUNDER INTRO: flash first, then start the rain.
+  // This does not consume any of the player's 12-second round.
+  // ------------------------------------------------
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      stormReadyRef.current = true;
+      setStormReady(true);
+    }, THUNDER_INTRO_MS);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   // ------------------------------------------------
   // FINISH THE TEST
@@ -223,7 +223,7 @@ export default function UmbrellaDilemma({
   // ------------------------------------------------
 
   function moveUmbrella(event) {
-    if (finishedRef.current) return;
+    if (!stormReadyRef.current || finishedRef.current) return;
 
     const rect =
       event.currentTarget.getBoundingClientRect();
@@ -267,7 +267,7 @@ export default function UmbrellaDilemma({
   }
 
   function handlePointerDown(event) {
-    if (finishedRef.current) return;
+    if (!stormReadyRef.current || finishedRef.current) return;
 
     event.preventDefault();
 
@@ -325,18 +325,21 @@ export default function UmbrellaDilemma({
       // SPAWN RAINDROPS
       // --------------------------------------------
 
-      spawnAccumulator += dt * RAIN_PER_SECOND;
+      // Don't generate or animate raindrops until the thunder has ended.
+      if (stormReadyRef.current) {
+        spawnAccumulator += dt * RAIN_PER_SECOND;
 
-      while (spawnAccumulator >= 1) {
-        spawnAccumulator--;
+        while (spawnAccumulator >= 1) {
+          spawnAccumulator--;
 
-        dropsRef.current.push({
-          x: Math.random() * WIDTH,
-          y: -15,
-          speed: 240 + Math.random() * 130,
-          drift: 10 + Math.random() * 20,
-          length: 8 + Math.random() * 6,
-        });
+          dropsRef.current.push({
+            x: Math.random() * WIDTH,
+            y: -15,
+            speed: 240 + Math.random() * 130,
+            drift: 10 + Math.random() * 20,
+            length: 8 + Math.random() * 6,
+          });
+        }
       }
 
       // --------------------------------------------
@@ -715,6 +718,96 @@ export default function UmbrellaDilemma({
           }
         }
 
+        /* Natural-looking lightning: thin branched channels and two brief sky flashes. */
+        .umbrella-thunder-intro {
+          position: absolute;
+          inset: 0;
+          z-index: 5;
+          overflow: hidden;
+          pointer-events: none;
+          background: rgba(16, 27, 44, .21);
+          animation: umbrella-thunder-shade 1550ms ease-out both;
+        }
+
+        .umbrella-thunder-intro::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          background: radial-gradient(
+            ellipse at 67% 18%,
+            rgba(246, 250, 255, .92) 0%,
+            rgba(208, 227, 255, .48) 36%,
+            rgba(206, 223, 246, .15) 73%,
+            transparent 100%
+          );
+          animation: umbrella-sky-flash 1550ms linear both;
+        }
+
+        .umbrella-lightning-field {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          overflow: visible;
+          opacity: 0;
+          animation: umbrella-lightning-strike 1550ms linear both;
+        }
+
+        .umbrella-lightning-halo {
+          fill: none;
+          stroke: #c6e4ff;
+          stroke-width: 11;
+          stroke-linejoin: round;
+          stroke-linecap: round;
+          opacity: .7;
+          filter: url(#umbrella-lightning-glow);
+        }
+
+        .umbrella-lightning-core {
+          fill: none;
+          stroke: #f8fbff;
+          stroke-width: 2.4;
+          stroke-linejoin: round;
+          stroke-linecap: round;
+        }
+
+        .umbrella-lightning-branches {
+          fill: none;
+          stroke: #e4f1ff;
+          stroke-width: 1.25;
+          stroke-linejoin: round;
+          stroke-linecap: round;
+        }
+
+        /* The bright channels appear for fractions of a second, never as a logo. */
+        @keyframes umbrella-lightning-strike {
+          0%, 13%, 20%, 27%, 35%, 100% { opacity: 0; }
+          15%, 16% { opacity: 1; }
+          29% { opacity: .8; }
+        }
+
+        @keyframes umbrella-sky-flash {
+          0%, 12%, 21%, 26%, 37%, 100% { opacity: 0; }
+          15% { opacity: .72; }
+          17% { opacity: .25; }
+          29% { opacity: .45; }
+          31% { opacity: .12; }
+        }
+
+        @keyframes umbrella-thunder-shade {
+          0%, 58% { background: rgba(16, 27, 44, .21); }
+          100% { background: transparent; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .umbrella-thunder-intro,
+          .umbrella-thunder-intro::before,
+          .umbrella-lightning-field { animation: none; }
+          .umbrella-thunder-intro { background: transparent; }
+          .umbrella-lightning-field { opacity: 0; }
+        }
+
         .umbrella-ground {
           position: absolute;
           inset: auto 0 0;
@@ -931,6 +1024,43 @@ export default function UmbrellaDilemma({
         <img className="umbrella-background umbrella-weather umbrella-weather-sunny" src={ASSETS.sunny} alt="" draggable={false} />
         <div className="umbrella-ground" />
 
+        {/* A branching lightning strike briefly lights the sky before rain starts. */}
+        {!stormReady && !hud.finished && (
+          <div className="umbrella-thunder-intro" aria-hidden="true">
+            <svg
+              className="umbrella-lightning-field"
+              viewBox="0 0 900 540"
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <filter
+                  id="umbrella-lightning-glow"
+                  x="-70%"
+                  y="-70%"
+                  width="240%"
+                  height="240%"
+                >
+                  <feGaussianBlur stdDeviation="7" />
+                </filter>
+              </defs>
+              {/* Uneven main discharge: thin and branched, like actual lightning. */}
+              <path
+                className="umbrella-lightning-halo"
+                d="M628 -16 L624 30 L604 57 L620 79 L595 104 L605 126 L570 161 L579 182 L552 209 L562 238 L530 269 L540 291 L512 321"
+              />
+              <path
+                className="umbrella-lightning-core"
+                d="M628 -16 L624 30 L604 57 L620 79 L595 104 L605 126 L570 161 L579 182 L552 209 L562 238 L530 269 L540 291 L512 321"
+              />
+              <path
+                className="umbrella-lightning-branches"
+                d="M620 79 L651 91 L668 116 L691 125 M605 126 L633 149 L642 178 L664 192 M570 161 L540 170 L522 190 L504 196 M562 238 L587 252 L592 279 L607 291 M540 291 L517 301 L505 329 L490 341 M604 57 L585 73 L576 92"
+              />
+            </svg>
+          </div>
+        )}
+
         {CHARACTERS.map((character) => (
           <div
             key={character.id}
@@ -942,18 +1072,6 @@ export default function UmbrellaDilemma({
               height: `${(character.height / HEIGHT) * 100}%`,
             }}
           >
-            <img
-              className="umbrella-character-shadow"
-              src={ASSETS.shadow}
-              alt=""
-              draggable={false}
-              style={{
-                width: character.shadow.width,
-                bottom: character.shadow.bottom,
-                left: character.shadow.left,
-                opacity: character.shadow.opacity,
-              }}
-            />
             <img
               className="umbrella-character"
               src={ASSETS[character.id]}
