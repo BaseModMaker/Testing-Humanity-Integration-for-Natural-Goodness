@@ -9,7 +9,8 @@ function TitleScreen() {
   return (
     <main
       style={{
-        minHeight: "100vh",
+        position: "relative",
+        minHeight: "100dvh",
         backgroundImage: `url("${process.env.PUBLIC_URL}/assets/thing_background.png")`,
         backgroundPosition: "center",
         backgroundSize: "cover",
@@ -23,9 +24,9 @@ function TitleScreen() {
       <div
         style={{
           position: "absolute",
-          bottom: "150px",
-          right: "220px",
-          width: "200px",
+          bottom: "5dvh",
+          right: "min(220px, 45vw)",
+          width: "min(200px, 45vw)",
           zIndex: 10,
         }}
       >
