@@ -1,3 +1,4 @@
+import GameRewardSummary from "./GameRewardSummary";
 
 import React, {
   useState,
@@ -163,7 +164,6 @@ export default function UmbrellaDilemma({
   const [weatherPhase, setWeatherPhase] = useState("rain");
   const [showResults, setShowResults] = useState(false);
   const [finalResult, setFinalResult] = useState(null);
-  const continueButtonRef = useRef(null);
   const continuedRef = useRef(false);
   // The animation loop reads the ref so it does not restart when the intro ends.
   const stormReadyRef = useRef(false);
@@ -224,10 +224,6 @@ export default function UmbrellaDilemma({
       clearTimeout(toResults);
     };
   }, [hud.finished]);
-
-  useEffect(() => {
-    if (showResults) continueButtonRef.current?.focus();
-  }, [showResults]);
 
   // ------------------------------------------------
   // FINISH THE TEST
@@ -956,117 +952,6 @@ export default function UmbrellaDilemma({
           transition: width .1s linear;
         }
 
-        /* Results dialog only appears once the sunny scene is fully visible. */
-        .umbrella-results-overlay {
-          position: absolute;
-          inset: 0;
-          z-index: 10;
-          display: grid;
-          place-items: center;
-          padding: 20px;
-          background: rgba(25, 42, 36, .32);
-          backdrop-filter: blur(2px);
-          animation: umbrella-overlay-in 300ms ease-out both;
-        }
-        .umbrella-results-card {
-          width: min(440px, 100%);
-          padding: clamp(22px, 4vw, 36px);
-          color: var(--thing-ink);
-          background: rgb(248, 236, 221);
-          border: 1px solid #a5a18a;
-          border-radius: 20px;
-          box-shadow: 0 18px 54px rgba(28, 41, 33, .23);
-          text-align: center;
-          animation: umbrella-dialog-in 380ms cubic-bezier(.2, .8, .2, 1) both;
-        }
-        .umbrella-results-icon {
-          display: grid;
-          place-items: center;
-          width: 56px;
-          height: 56px;
-          margin: 0 auto 14px;
-          border: 2px solid #829b6c;
-          border-radius: 50%;
-          color: #597449;
-          background: #e4ebcf;
-          font-size: 30px;
-        }
-        .umbrella-results-eyebrow {
-          margin: 0 0 6px;
-          font-size: 12px;
-          font-weight: 700;
-          letter-spacing: .12em;
-          text-transform: uppercase;
-          color: #738563;
-        }
-        .umbrella-results-title {
-          margin: 0 0 8px;
-          font-size: clamp(24px, 4vw, 30px);
-          letter-spacing: -.025em;
-        }
-        .umbrella-results-copy {
-          margin: 0 0 22px;
-          color: #646b58;
-          font-size: 14px;
-          line-height: 1.5;
-        }
-        .umbrella-results-scores {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 10px;
-          margin-bottom: 24px;
-        }
-        .umbrella-results-score {
-          padding: 11px 7px;
-          border: 1px solid #c8c5b1;
-          border-radius: 12px;
-          background: rgba(255, 255, 255, .36);
-        }
-        .umbrella-results-score strong {
-          display: block;
-          margin-bottom: 3px;
-          font-size: 23px;
-          color: #5b754b;
-          font-variant-numeric: tabular-nums;
-        }
-        .umbrella-results-score span {
-          display: block;
-          font-size: 11px;
-          color: #667057;
-        }
-        .umbrella-next-button {
-          width: 100%;
-          min-height: 49px;
-          padding: 12px 18px;
-          border: 1px solid #5e754e;
-          border-radius: 12px;
-          background: #778f63;
-          color: #fffaf0;
-          font-size: 16px;
-          font-weight: 700;
-          font-family: inherit;
-          cursor: pointer;
-          transition: background 150ms ease, transform 150ms ease;
-        }
-        .umbrella-next-button:hover { background: #617d50; }
-        .umbrella-next-button:active { transform: scale(.985); }
-        .umbrella-next-button:focus-visible {
-          outline: 3px solid #a7c989;
-          outline-offset: 3px;
-        }
-        @keyframes umbrella-overlay-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes umbrella-dialog-in {
-          from { opacity: 0; transform: translateY(14px) scale(.98); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .umbrella-results-card,
-          .umbrella-results-overlay { animation: none; }
-        }
-
         @media (max-width: 1000px) {
           .umbrella-header-content { gap: 12px; }
           .umbrella-characters { gap: 5px; }
@@ -1281,46 +1166,15 @@ export default function UmbrellaDilemma({
         )}
 
         {showResults && finalResult && (
-          <div className="umbrella-results-overlay">
-            <section
-              className="umbrella-results-card"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="umbrella-results-title"
-              aria-describedby="umbrella-results-description"
-            >
-              <div className="umbrella-results-icon" aria-hidden="true">✓</div>
-              <p className="umbrella-results-eyebrow">Test 1 / 4 completed</p>
-              <h2 id="umbrella-results-title" className="umbrella-results-title">
-                The rain has passed
-              </h2>
-              <p id="umbrella-results-description" className="umbrella-results-copy">
-                Every choice matters. Here's how you did.
-              </p>
-              <div className="umbrella-results-scores" aria-label="Your scores">
-                <div className="umbrella-results-score">
-                  <strong>{finalResult.scores.rainProtection}</strong>
-                  <span>Protection</span>
-                </div>
-                <div className="umbrella-results-score">
-                  <strong>{finalResult.scores.empathy}</strong>
-                  <span>Empathy</span>
-                </div>
-                <div className="umbrella-results-score">
-                  <strong>{finalResult.scores.ecology}</strong>
-                  <span>Ecology</span>
-                </div>
-              </div>
-              <button
-                ref={continueButtonRef}
-                type="button"
-                className="umbrella-next-button"
-                onClick={handleContinue}
-              >
-                Continue to next test →
-              </button>
-            </section>
-          </div>
+          <GameRewardSummary
+            title="The rain has passed"
+            rewards={[
+              ["Protection", finalResult.scores.rainProtection],
+              ["Empathy", finalResult.scores.empathy],
+              ["Ecology", finalResult.scores.ecology],
+            ]}
+            onContinue={handleContinue}
+          />
         )}
       </div>
     </div>

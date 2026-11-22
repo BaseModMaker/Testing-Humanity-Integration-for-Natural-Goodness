@@ -1,3 +1,4 @@
+import GameRewardSummary from "./GameRewardSummary";
 
 import React, { useEffect, useRef, useState } from "react";
 import { GameHeader } from "./GameBars";
@@ -506,54 +507,6 @@ const DogPettingMiniGame = ({
             100% { opacity: 0; transform: scale(.7); }
           }
 
-          /* Completed round: muted backdrop and cream results card. */
-          .dog-overlay {
-            position: absolute;
-            inset: 0;
-            z-index: 10;
-            display: grid;
-            place-items: center;
-            padding: 18px;
-            background: rgba(34,46,35,.40);
-          }
-          .dog-result-card {
-            width: min(380px, 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 18px;
-            padding: 32px 28px;
-            border: 1px solid #c4bda9;
-            border-radius: 18px;
-            background: var(--thing-cream);
-            box-shadow: 0 18px 50px rgba(34,46,35,.18);
-            text-align: center;
-          }
-          .dog-result-card h2 {
-            margin: 0;
-            font-size: clamp(22px, 3vw, 30px);
-            color: var(--thing-ink);
-          }
-          .dog-result-card p { margin: 0; font-size: 15px; color: #647056; }
-          .dog-result-score {
-            color: #536d47;
-            font-size: 34px;
-            font-weight: 800;
-            font-variant-numeric: tabular-nums;
-          }
-          .dog-continue {
-            width: 100%;
-            min-height: 46px;
-            padding: 11px 20px;
-            color: #fffaf0;
-            background: #758d61;
-            border: 1px solid #63784b;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-          }
-          .dog-continue:hover { background: #617c4c; }
-
           @media (max-width: 820px) {
             .dog-header-content { gap: 12px; }
             .dog-header-heading { gap: 10px; }
@@ -659,16 +612,11 @@ const DogPettingMiniGame = ({
           </div>
 
           {!running && (
-            <div className="dog-overlay">
-              <div className="dog-result-card">
-                <h2>Petting complete!</h2>
-                <p>Kindness points earned</p>
-                <div className="dog-result-score">{score}</div>
-                <button type="button" className="dog-continue" onClick={() => onContinue(score)}>
-                  Continue
-                </button>
-              </div>
-            </div>
+            <GameRewardSummary
+              title="Petting complete!"
+              rewards={[["Kindness points", score]]}
+              onContinue={() => onContinue(score)}
+            />
           )}
         </main>
       </div>

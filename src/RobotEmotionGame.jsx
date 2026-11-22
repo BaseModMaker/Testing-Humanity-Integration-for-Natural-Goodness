@@ -1,3 +1,4 @@
+import GameRewardSummary from "./GameRewardSummary";
 
 import React, { useState, useRef, useMemo } from "react";
 import { GameHeader } from "./GameBars";
@@ -237,11 +238,11 @@ export default function RobotEmotionGame({
   const [drawings, setDrawings] = useState({});
   const [scores, setScores] = useState({});
   const [tool, setTool] = useState("draw");
+  const [finalResult, setFinalResult] = useState(null);
 
   const painting = useRef(false);
   const lastPoint = useRef(null);
   const completedRef = useRef(false);
-
   const pixels = drawings[emotion] || EMPTY_PIXELS;
 
   // -----------------------------------------------
@@ -443,7 +444,7 @@ export default function RobotEmotionGame({
 
   function checkDrawing() {
     // A drawing is required, but no score minimum.
-    if (pixels.length === 0) return;
+    if (pixels.length === 0 || finalResult) return;
 
     // Save the current live score
     const updated = {
@@ -467,12 +468,14 @@ export default function RobotEmotionGame({
       // Automatically advance
       selectEmotion(next);
     } else {
-      // All emotions have been drawn
-      if (!completedRef.current) {
-        completedRef.current = true;
-        onComplete?.(result);
-      }
+      setFinalResult(result);
     }
+  }
+
+  function continueAssessment() {
+    if (!finalResult || completedRef.current) return;
+    completedRef.current = true;
+    onComplete?.(finalResult);
   }
 
   // -----------------------------------------------
@@ -1062,6 +1065,13 @@ export default function RobotEmotionGame({
           </aside>
         </div>
       </main>
+      {finalResult && (
+        <GameRewardSummary
+          title="Emotion test complete"
+          rewards={[["Empathy", finalResult.average]]}
+          onContinue={continueAssessment}
+        />
+      )}
     </div>
   );
 }
