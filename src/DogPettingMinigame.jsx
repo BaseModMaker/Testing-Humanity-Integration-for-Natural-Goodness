@@ -16,6 +16,7 @@ const tailImages = [
     "/assets/dog_tail3.png",
     "/assets/dog_tail2.png",
 ];
+const tail_delay = 600;
 
 const TAIL_INTERVAL = 150; // milliseconds between frames
 
@@ -32,6 +33,7 @@ const DogPettingMiniGame = ({
     const [isPunched, setIsPunched] = useState(false);
     const [impactEmoji, setImpactEmoji] = useState(false);
     const [tailFrame, setTailFrame] = useState(0);
+    const [showTail, setShowTail] = useState(false);
     const clickTimes = useRef([]);
     const punchTimeout = useRef(null);
 
@@ -86,15 +88,24 @@ const DogPettingMiniGame = ({
     }, [hearts]);
     useEffect(() => {
         if (!isPetting) {
+            setShowTail(false);
             setTailFrame(0);
             return;
         }
+
+        // Wait 300ms before showing the tail
+        const showTimeout = setTimeout(() => {
+            setShowTail(true);
+        }, tail_delay);
 
         const interval = setInterval(() => {
             setTailFrame((current) => (current + 1) % tailImages.length);
         }, TAIL_INTERVAL);
 
-        return () => clearInterval(interval);
+        return () => {
+            clearTimeout(showTimeout);
+            clearInterval(interval);
+        };
     }, [isPetting]);
 
     useEffect(() => {
@@ -225,8 +236,8 @@ const DogPettingMiniGame = ({
     const timeRemainingPercent = Math.max(0, 100 * (1 - elapsed / GAME_DURATION));
 
     return (
-      <div className="dog-game">
-        <style>{`
+        <div className="dog-game">
+            <style>{`
           .dog-game {
             --thing-cream: rgb(248, 236, 221);
             --thing-ink: #43483a;
@@ -531,95 +542,95 @@ const DogPettingMiniGame = ({
           }
         `}</style>
 
-        <GameHeader>
-          <div className="dog-header-content">
-            <div className="dog-header-heading">
-              <span className="dog-test-badge">{testLabel}</span>
-              <span className="dog-heading-divider" aria-hidden="true" />
-              <svg className="dog-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M8.5 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM14 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM19 9.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
-                <path d="M12 13c-2 0-3 2-4.5 3.5C6 18 7 20 9 20c1.2 0 1.7-.7 3-.7s1.8.7 3 .7c2 0 3-2 1.5-3.5C15 15 14 13 12 13Z" />
-              </svg>
-              <h1 className="dog-title">Dog Petting</h1>
-            </div>
-            <div className="dog-header-right">
-              <div className="dog-score-chip" aria-live="polite">
-                <span>Kindness points</span>
-                <strong>{score}</strong>
-              </div>
-              <div className="dog-timer">
-                <div
-                  className="dog-time-meter"
-                  role="progressbar"
-                  aria-label="Time remaining"
-                  aria-valuemin={0}
-                  aria-valuemax={GAME_DURATION / 1000}
-                  aria-valuenow={Math.ceil((GAME_DURATION - elapsed) / 1000)}
-                >
-                  <div
-                    className="dog-time-fill"
-                    style={{ clipPath: `inset(0 ${100 - timeRemainingPercent}% 0 0)` }}
-                  />
+            <GameHeader>
+                <div className="dog-header-content">
+                    <div className="dog-header-heading">
+                        <span className="dog-test-badge">{testLabel}</span>
+                        <span className="dog-heading-divider" aria-hidden="true" />
+                        <svg className="dog-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M8.5 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM14 6.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM19 9.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                            <path d="M12 13c-2 0-3 2-4.5 3.5C6 18 7 20 9 20c1.2 0 1.7-.7 3-.7s1.8.7 3 .7c2 0 3-2 1.5-3.5C15 15 14 13 12 13Z" />
+                        </svg>
+                        <h1 className="dog-title">Dog Petting</h1>
+                    </div>
+                    <div className="dog-header-right">
+                        <div className="dog-score-chip" aria-live="polite">
+                            <span>Kindness points</span>
+                            <strong>{score}</strong>
+                        </div>
+                        <div className="dog-timer">
+                            <div
+                                className="dog-time-meter"
+                                role="progressbar"
+                                aria-label="Time remaining"
+                                aria-valuemin={0}
+                                aria-valuemax={GAME_DURATION / 1000}
+                                aria-valuenow={Math.ceil((GAME_DURATION - elapsed) / 1000)}
+                            >
+                                <div
+                                    className="dog-time-fill"
+                                    style={{ clipPath: `inset(0 ${100 - timeRemainingPercent}% 0 0)` }}
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </GameHeader>
+            </GameHeader>
 
-        <main className="dog-scene">
-          <img className="dog-scene-background" src={publicPath + backgroundSrc} alt="" draggable={false} />
-          <div className="dog-scene-tint" aria-hidden="true" />
-          {running && (
-            <div className="dog-instructions">
-              Gently pet the dog by moving in circles
-            </div>
-          )}
+            <main className="dog-scene">
+                <img className="dog-scene-background" src={publicPath + backgroundSrc} alt="" draggable={false} />
+                <div className="dog-scene-tint" aria-hidden="true" />
+                {running && (
+                    <div className="dog-instructions">
+                        Gently pet the dog by moving in circles
+                    </div>
+                )}
 
-          <div className="dog-container">
-            {isPetting && !isPunched && (
-              <img
-                className="dog-tail"
-                src={publicPath + tailImages[tailFrame]}
-                alt=""
-                draggable={false}
-              />
-            )}
-            <div className="dog-image-clip">
-              <img
-                className={`dog-image ${isPunched ? "punched" : ""}`}
-                src={publicPath + (isPunched ? dogAngrySrc : isPetting ? dogLoveSrc : dogSrc)}
-                alt="Dog"
-                draggable={false}
-              />
-            </div>
-            <img className="dog-frame" src={publicPath + dogFrameSrc} alt="" draggable={false} />
-            <div
-              className="pet-area"
-              aria-label="Pet the dog gently in circles"
-              onClick={handleDogClick}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={stopPetting}
-              onPointerCancel={stopPetting}
-              onLostPointerCapture={stopPetting}
-            />
-            {hearts.map((heart) => (
-              <div key={heart.id} className="heart" style={{ "--heart-left": `${heart.left}%` }}>
-                ❤️
-              </div>
-            ))}
-            {impactEmoji && <div className="impact-emoji">💢</div>}
-          </div>
+                <div className="dog-container">
+                    {isPetting && !isPunched && showTail &&(
+                        <img
+                            className="dog-tail"
+                            src={publicPath + tailImages[tailFrame]}
+                            alt=""
+                            draggable={false}
+                        />
+                    )}
+                    <div className="dog-image-clip">
+                        <img
+                            className={`dog-image ${isPunched ? "punched" : ""}`}
+                            src={publicPath + (isPunched ? dogAngrySrc : isPetting ? dogLoveSrc : dogSrc)}
+                            alt="Dog"
+                            draggable={false}
+                        />
+                    </div>
+                    <img className="dog-frame" src={publicPath + dogFrameSrc} alt="" draggable={false} />
+                    <div
+                        className="pet-area"
+                        aria-label="Pet the dog gently in circles"
+                        onClick={handleDogClick}
+                        onPointerDown={handlePointerDown}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={stopPetting}
+                        onPointerCancel={stopPetting}
+                        onLostPointerCapture={stopPetting}
+                    />
+                    {hearts.map((heart) => (
+                        <div key={heart.id} className="heart" style={{ "--heart-left": `${heart.left}%` }}>
+                            ❤️
+                        </div>
+                    ))}
+                    {impactEmoji && <div className="impact-emoji">💢</div>}
+                </div>
 
-          {!running && (
-            <GameRewardSummary
-              title="Petting complete!"
-              rewards={[["Kindness points", score]]}
-              onContinue={() => onContinue(score)}
-            />
-          )}
-        </main>
-      </div>
+                {!running && (
+                    <GameRewardSummary
+                        title="Petting complete!"
+                        rewards={[["Kindness points", score]]}
+                        onContinue={() => onContinue(score)}
+                    />
+                )}
+            </main>
+        </div>
     );
 };
 
