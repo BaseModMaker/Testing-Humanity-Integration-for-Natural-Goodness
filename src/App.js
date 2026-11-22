@@ -199,10 +199,11 @@ function MainScreen({ scores, passport, updatePassport, completed, startAssessme
       }}
     >
       <div className="passport-spread">
-        <section className="passport-page" aria-labelledby="passport-title">
+        <section className="passport-page passport-identity-page" aria-labelledby="passport-title">
           <header className="passport-page-header">
-            <img className="passport-logo" src={`${process.env.PUBLIC_URL}/assets/home_logo.png`} alt="T.H.I.N.G." />
-            <h1 id="passport-title">Robot passport</h1>
+            <h1 id="passport-title" className="passport-logo">
+              <img src={`${process.env.PUBLIC_URL}/assets/home_logo.png`} alt="T.H.I.N.G." />
+            </h1>
           </header>
       <div className="passport-photo">
         <img
@@ -227,7 +228,7 @@ function MainScreen({ scores, passport, updatePassport, completed, startAssessme
         ))}
       </dl>
         </section>
-        <section className="passport-page" aria-labelledby="passport-assessment-title">
+        <section className="passport-page passport-review-page" aria-labelledby="passport-assessment-title">
           <header className="passport-page-header passport-review-header">
             <h2 id="passport-assessment-title">Assessment record</h2>
           </header>
