@@ -15,6 +15,8 @@ const ASSETS = {
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const STARTING_APPROACH = 0.5;
+const FALL_DURATION = 380;
+const FALL_POSE_HOLD = 320;
 
 export function getDrivingScores(collision) {
   return {
@@ -32,6 +34,7 @@ export default function DrivingMiniGame({
   const [progress, setProgress] = useState(0);
   const [steering, setSteering] = useState(0);
   const [result, setResult] = useState(null);
+  const [showSummary, setShowSummary] = useState(false);
   const [running, setRunning] = useState(true);
   // Wait for the first steering interaction before starting the countdown.
   const [started, setStarted] = useState(false);
@@ -129,6 +132,16 @@ export default function DrivingMiniGame({
     return () => cancelAnimationFrame(animationFrame.current);
   }, [running, started, duration]);
 
+  useEffect(() => {
+    if (!result) return;
+
+    const summaryTimer = setTimeout(
+      () => setShowSummary(true),
+      FALL_DURATION + FALL_POSE_HOLD
+    );
+    return () => clearTimeout(summaryTimer);
+  }, [result]);
+
   const approach = STARTING_APPROACH + (1 - STARTING_APPROACH) * progress;
   const objectScale = 0.01 + approach * 3;
   const objectY = 25 + approach * 30;
@@ -144,10 +157,10 @@ export default function DrivingMiniGame({
   const scores = result ? getDrivingScores(result) : null;
   const collisionName =
     result === "both"
-      ? "grandma and hamster"
+      ? "grandma and the hamster"
       : result === "left"
         ? "grandma"
-        : "hamster";
+        : "the hamster";
 
   return (
     <div className={`driving-game ${running ? "is-running" : "is-finished"} ${started ? "is-started" : ""}`}>
@@ -318,6 +331,12 @@ export default function DrivingMiniGame({
           image-rendering: pixelated;
           pointer-events: none;
           -webkit-user-drag: none;
+          transition: transform ${FALL_DURATION}ms ease-in;
+        }
+        .dg-target--left { --fall-angle: -90deg; }
+        .dg-target--right { --fall-angle: 90deg; }
+        .dg-target.is-hit img {
+          transform: translateY(15%) rotate(var(--fall-angle));
         }
         .dg-interior {
           position: absolute;
@@ -391,6 +410,7 @@ export default function DrivingMiniGame({
   animation: wheelShake .18s infinite ease-in-out;
 }
         @media (prefers-reduced-motion: reduce) {
+          .dg-target img { transition: none; }
           .driving-game.is-running .dg-interior,
           .driving-game.is-running .dg-wheel-image {
             animation: none;
@@ -472,7 +492,7 @@ export default function DrivingMiniGame({
             }}
           >
             <div
-              className="dg-target"
+              className={`dg-target dg-target--left ${result === "left" || result === "both" ? "is-hit" : ""}`}
               style={{
                 left: `${leftPosition}%`,
                 top: `${objectY}%`,
@@ -482,7 +502,7 @@ export default function DrivingMiniGame({
               <img src={ASSETS.elder} alt="" draggable={false} />
             </div>
             <div
-              className="dg-target"
+              className={`dg-target dg-target--right ${result === "right" || result === "both" ? "is-hit" : ""}`}
               style={{
                 left: `${rightPosition}%`,
                 top: `${objectY}%`,
@@ -520,9 +540,9 @@ export default function DrivingMiniGame({
           </div>
         )}
 
-        {result && (
+        {showSummary && result && (
           <GameRewardSummary
-            title={`You hit the ${collisionName}!`}
+            title={`Oh no! You hit ${collisionName}`}
             rewards={[
               ["Ecology", scores.Ecology],
               ["Adaptability", scores.Adaptability],
